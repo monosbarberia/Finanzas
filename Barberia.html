@@ -3181,7 +3181,6 @@ window.renderMes = function(){
   } else {
     h += block("Cobros por día", empty("Sin cobros en este mes."), "");
   }
-
   const gastosHtml = gl.length
     ? '<div id="mesGastos" style="max-height:220px;overflow-y:auto">'+gl.map(x =>
         row(esc(x.descripcion||x.categoria||"Gasto"),
