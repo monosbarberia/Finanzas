@@ -2,7 +2,7 @@
   "name": "Finanzas Barberia",
   "short_name": "Administración",
   "description": "Panel de estadísticas y gestión de Mono's Barbería",
-  "start_url": "./dashboard.html",
+  "start_url": "./Barberia.html",
   "display": "standalone",
   "background_color": "#1c3823",
   "theme_color": "#1c3823",
