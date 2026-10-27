@@ -596,7 +596,7 @@ function renderResumen(){
     card("Productos (café / ponquecitos)", money(s.products || 0), "Solo visual · no se reparte ni cuenta en la barbería", "ok") + 
     '</div>';
 
-  const byDay = {}; s.cobradas.forEach(r => { byDay[r.fecha] = (byDay[r.fecha]||0) + serviceOf(r); });
+  const byDay = {}; s.cobradas.forEach(r => { byDay[r.fecha] = (byDay[r.fecha]||0) + serviceOf(r) + r.tip; });
   const dayKeys = Object.keys(byDay).sort();
   h += block("Cobros por día", dayKeys.length ? canvas("chDay") : empty("Todavía no hay cobros en este período."));
 
@@ -612,7 +612,7 @@ function renderResumen(){
 
   const done = list.filter(r => r.status==="cobrada").sort((a,b) => (b.fecha+b.turno).localeCompare(a.fecha+a.turno));
   h += block("Cobrados "+esc(p.label), done.length ? done.map(r =>
-    row(esc(r.nombre), niceDate(r.fecha)+" · "+esc(r.turno)+" · propina "+money(r.tip), money(r.charged), "ok",
+    row(esc(r.nombre), niceDate(r.fecha)+" · "+esc(r.turno)+" · propina "+money(r.tip), money(serviceOf(r) + r.tip), "ok",
       btn("propina",r,r.tip ? "Cambiar propina" : "+ Propina"))).join("") : empty("Aún no hay cobros."),
     "Toca + Propina al final del día para anotarla.");
 
@@ -1028,8 +1028,8 @@ function learn(){
   const prodAll = gastos.filter(g => isProdGasto(g) && String(g.fecha) >= START_DATE);
   return {t, month, C, byDay, wd, dayAvg, wdAvg, todayIng:byDay[t] || 0,
     monthIng:C.filter(r => mon(r.fecha) === month).reduce((s,r) => s + ingOf(r), 0),
-    ticketAll:C.length ? C.reduce((s,r) => s + r.charged, 0)/C.length : 0,
-    tipRate:(() => { const c = C.reduce((s,r) => s + r.charged, 0), p = C.reduce((s,r) => s + r.tip, 0); return c > 0 ? p/c : 0; })(),   // propina promedio sobre lo cobrado
+    ticketAll:C.length ? C.reduce((s,r) => s + serviceOf(r), 0)/C.length : 0,
+    tipRate:(() => { const c = C.reduce((s,r) => s + serviceOf(r), 0), p = C.reduce((s,r) => s + r.tip, 0); return c > 0 ? p/c : 0; })(),
     costVar:C.length ? prodAll.reduce((s,g) => s + num(g.monto), 0)/C.length : 0,
     prodAll, daysData:allN + (byDay[t] ? 1 : 0)};
 }
@@ -1048,8 +1048,10 @@ function projection(m, G){
   reservas.forEach(r => {
     if(mon(r.fecha) !== m.month) return;
     if(!(r.status === "futura" || (r.status === "pendiente" && r.fecha === m.t))) return;
-    const a = r.total || r.expected || 0;
-    booked[r.fecha] = (booked[r.fecha] || 0) + (a > 0 ? a : m.ticketAll)*(1 + m.tipRate);   // sin monto: usa tu ticket promedio; se suma la propina promedio
+        let prod = 0;
+    (r.services || []).forEach(n => { if(isProductoAparte(n)) prod += precioProducto(n); });
+    const a = Math.max(0, (r.total || r.expected || 0) - prod);
+    booked[r.fecha] = (booked[r.fecha] || 0) + (a > 0 ? a : m.ticketAll)*(1 + m.tipRate);
     cnt[r.fecha] = (cnt[r.fecha] || 0) + 1;
   });
   // Estimado de un día = lo ya reservado + lo que suele faltar para tu promedio.
@@ -3160,7 +3162,7 @@ window.renderMes = function(){
 
   // Cobros por día
   const byDay = {};
-  s.cobradas.forEach(r => { byDay[r.fecha] = (byDay[r.fecha]||0) + serviceOf(r); });
+  s.cobradas.forEach(r => { byDay[r.fecha] = (byDay[r.fecha]||0) + serviceOf(r) + (r.tip || 0); });
   const dayKeys = Object.keys(byDay).sort();
   if(dayKeys.length){
     let best = dayKeys[0], worst = dayKeys[0];
@@ -3177,7 +3179,7 @@ window.renderMes = function(){
     }).join("");
     h += block("Cobros por día", rows, "Solo barbería. Mejor y peor día del mes.");
   } else {
-    h += block("Cobros por día", empty("Sin cobros en este mes."), "");
+    h += block("Cobros por día", rows, "Barbería + propinas (sin café/ponquecitos). Mejor y peor día del mes.");
   }
 
   const gastosHtml = gl.length
