@@ -2455,19 +2455,30 @@ let CART=JSON.parse(JSON.stringify(DEF)), outG=[], MES=todayStr().slice(0,7), FI
 
 /* ---------- Guardado (tabla "ajustes" de Supabase; copia en el teléfono) ---------- */
 async function cargarCart(){
-  let v=null;
-  try{const {data,error}=await sb.from("ajustes").select("valor").eq("clave","cartera").limit(1);if(error)throw error;if(data&&data.length)v=data[0].valor;}catch(e){}
-  if(!v){try{v=JSON.parse(localStorage.getItem("monos_cartera")||"null");}catch(e){}}
-  CART=Object.assign(JSON.parse(JSON.stringify(DEF)),v||{});
+  let v = null;
+  try{
+    const {data, error} = await sb.from("ajustes").select("valor").eq("clave","cartera").limit(1);
+    if(error) throw error;
+    if(data && data.length) v = data[0].valor;
+  }catch(e){ console.warn("cargarCart Supabase:", e); }
+  if(!v){
+    try{ v = JSON.parse(localStorage.getItem("monos_cartera") || "null"); }catch(e){}
+  }
+  CART = Object.assign(JSON.parse(JSON.stringify(DEF)), v || {});
 }
 async function guardarCart(){
   try{localStorage.setItem("monos_cartera",JSON.stringify(CART));}catch(e){}
   try{
-    let r=await sb.from("ajustes").update({valor:CART}).eq("clave","cartera").select("clave");
-    if(r.error)throw r.error;
-    if(!r.data||!r.data.length){r=await sb.from("ajustes").insert({clave:"cartera",valor:CART}).select("clave");if(r.error)throw r.error;}
+    const {error} = await sb.from("ajustes").upsert(
+      {clave:"cartera", valor:CART},
+      {onConflict:"clave"}
+    );
+    if(error) throw error;
     return true;
-  }catch(e){toast("No se guardó en la base de datos: "+(e.message||e),6000);return false;}
+  }catch(e){
+    toast("No se guardó en la base de datos: "+(e.message||e),6000);
+    return false;
+  }
 }
 
 /* ---------- Utilidades de pantalla ---------- */
