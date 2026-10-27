@@ -3177,9 +3177,9 @@ window.renderMes = function(){
       if(d === worst && dayKeys.length > 1 && best !== worst) mark = "peor";
       return row((DAYS[wd]||"")+" "+shortDate(d), mark, money(byDay[d]), d===best?"ok":(d===worst?"bad":""));
     }).join("");
-    h += block("Cobros por día", rows, "Solo barbería. Mejor y peor día del mes.");
-  } else {
     h += block("Cobros por día", rows, "Barbería + propinas (sin café/ponquecitos). Mejor y peor día del mes.");
+  } else {
+    h += block("Cobros por día", empty("Sin cobros en este mes."), "");
   }
 
   const gastosHtml = gl.length
