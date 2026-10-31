@@ -17,7 +17,7 @@ html,body{margin:0;background:var(--g);color:var(--o);font-family:'Cormorant Gar
 body{min-height:100vh;overflow-x:hidden;padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 .wrap{max-width:550px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 14px) 16px 0}
 .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.logo{height:40px;width:auto;display:block;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45))}
+.logo{height:46px;width:auto;display:block;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45))}
 .login .logo{height:120px;margin:0 auto 12px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:2px;font-size:1.15em;text-transform:uppercase}
 .tools{display:flex;gap:8px}
@@ -32,7 +32,10 @@ button{font-family:inherit;color:var(--o);cursor:pointer}
 .nav{display:flex;align-items:center;justify-content:center;gap:14px}
 .nav button{background:none;border:0;font-size:1.8em;padding:4px 10px;transition:transform .12s}
 .nav button:active{transform:scale(.8)}.nav button:disabled{opacity:.2}
-.big{font-size:4.6em;font-weight:700;line-height:1;margin:6px 0 14px;color:#fff;letter-spacing:1px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.col+.col{border-left:1px solid var(--line)}
+.clab{font-style:italic;opacity:.8;font-size:.95em}
+.big{font-size:clamp(1.9em,9.5vw,2.9em);font-weight:700;line-height:1;margin:8px 0 14px;color:#fff;letter-spacing:.5px}
 .pill{background:transparent;border:1px solid var(--o);border-radius:20px;padding:7px 16px;font-size:.9em;font-weight:700;letter-spacing:1px;text-transform:uppercase;transition:all .15s}
 .pill.ok{background:var(--o);color:var(--g)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
@@ -109,7 +112,7 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 4p
 
 <div id="loginV" class="login" hidden>
   <div class="box">
-    <img class="logo" src="logo.png" alt="Mono's" onerror="this.style.display='none'"><h1>Mono's</h1><p>Caja y turnos</p>
+    <img class="logo" src="logo.png" alt="Mono's" onerror="this.style.display='none'"><p>Caja y turnos</p>
     <input id="lEm" type="email" placeholder="Correo" autocomplete="username">
     <input id="lPw" type="password" placeholder="Contraseña" autocomplete="current-password">
     <label class="rem"><input type="checkbox" id="lRem" checked> Mantener sesión iniciada</label>
@@ -121,7 +124,7 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 4p
 <div id="app" hidden>
 <div class="wrap">
   <div class="top">
-    <div class="brand"><img class="logo" src="logo.png" alt="" onerror="this.style.display='none'">Mono's</div>
+    <div class="brand"><img class="logo" src="logo.png" alt="Mono's" onerror="this.style.display='none'"></div>
     <div class="tools">
       <button class="ico" id="rf" onclick="recargar(true)" aria-label="Actualizar">&#8635;</button>
       <button class="ico" onclick="salir()" aria-label="Cerrar sesión">&#10162;</button>
@@ -135,12 +138,14 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 4p
         <div class="hlab" id="hLab"></div>
         <button id="nx" onclick="moverDia(1)" aria-label="Día siguiente">&#8250;</button>
       </div>
-      <div class="big" id="hBig">$0</div>
-      <button class="pill" id="hCp" onclick="copiar(S.vd,this)">Copiar</button>
+      <div class="two">
+        <div class="col"><div class="clab">Sin propina</div><div class="big" id="hBig0">$0</div><button class="pill" onclick="copiar(S.vd0,this)">Copiar</button></div>
+        <div class="col"><div class="clab">Con propina</div><div class="big" id="hBig">$0</div><button class="pill" onclick="copiar(S.vd,this)">Copiar</button></div>
+      </div>
     </div>
     <div class="grid2">
-      <div class="card"><button class="cp" onclick="copiar(S.vw,this)" aria-label="Copiar semana">&#10064;</button><small>Semana</small><b id="cW">$0</b></div>
-      <div class="card"><button class="cp" onclick="copiar(S.vm,this)" aria-label="Copiar mes">&#10064;</button><small>Mes</small><b id="cM">$0</b></div>
+      <div class="card"><button class="cp" onclick="copiar(S.vw,this)" aria-label="Copiar semana">&#10064;</button><small>Semana</small><b id="cW">$0</b><small id="cW0"></small></div>
+      <div class="card"><button class="cp" onclick="copiar(S.vm,this)" aria-label="Copiar mes">&#10064;</button><small>Mes</small><b id="cM">$0</b><small id="cM0"></small></div>
     </div>
     <button class="btn" onclick="abrirIngreso()">+ Ingresar ganancia</button>
     <div class="box">
@@ -204,16 +209,18 @@ const fmt=n=>"$"+Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,".");
 const num=v=>{const n=parseFloat(String(v).replace(",","."));return isFinite(n)?n:0};
 
 let sb=null;
-const S={dia:hoy(),per:"dia",cobros:[],cli:new Map(),precios:[],bdia:hoy(),bd:[],bsel:new Set(),filtro:"todos",vd:0,vw:0,vm:0,vis:0};
+const S={dia:hoy(),per:"dia",cobros:[],cli:new Map(),precios:[],bdia:hoy(),bd:[],bsel:new Set(),filtro:"todos",vd:0,vw:0,vm:0,vis:0,vd0:0,vis0:0,vw0:0,vm0:0};
 
-function mk(st){return window.supabase.createClient(SB_URL,SB_KEY,{auth:{storage:st,persistSession:true,autoRefreshToken:true}})}
+const SKEY="sb-"+SB_URL.split("//")[1].split(".")[0]+"-auth-token";
+// persist=true: la sesión se guarda en el teléfono. persist=false: solo vive en memoria y al refrescar vuelve el login.
+function mk(persist){return window.supabase.createClient(SB_URL,SB_KEY,{auth:persist?{storage:localStorage,persistSession:true,autoRefreshToken:true}:{persistSession:false,autoRefreshToken:true}})}
 function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("on"),1800)}
 
 async function init(){
-  const key="sb-"+SB_URL.split("//")[1].split(".")[0]+"-auth-token";
-  let st=null;
-  try{if(localStorage.getItem(key))st=localStorage;else if(sessionStorage.getItem(key))st=sessionStorage}catch(e){}
-  if(st){try{const c=mk(st);const {data}=await c.auth.getSession();if(data.session){sb=c;return entrar()}}catch(e){}}
+  try{sessionStorage.removeItem(SKEY)}catch(e){}
+  let guardada=false;
+  try{guardada=!!localStorage.getItem(SKEY)}catch(e){}
+  if(guardada){try{const c=mk(true);const {data}=await c.auth.getSession();if(data.session){sb=c;return entrar()}}catch(e){}}
   $("#loginV").hidden=false;
 }
 async function login(){
@@ -221,14 +228,16 @@ async function login(){
   if(!em||!pw){$("#lErr").textContent="Escribe correo y contraseña";return}
   const b=$("#lBtn");b.disabled=true;b.textContent="Entrando...";$("#lErr").textContent="";
   try{
-    const c=mk($("#lRem").checked?localStorage:sessionStorage);
+    const rec=$("#lRem").checked;
+    if(!rec){try{localStorage.removeItem(SKEY)}catch(e){}}
+    const c=mk(rec);
     const {error}=await c.auth.signInWithPassword({email:em,password:pw});
     if(error)throw error;
     sb=c;entrar();
   }catch(e){$("#lErr").textContent="Correo o contraseña incorrectos"}
   b.disabled=false;b.textContent="Entrar";
 }
-async function salir(){try{await sb.auth.signOut()}catch(e){}location.reload()}
+async function salir(){try{await sb.auth.signOut()}catch(e){}try{localStorage.removeItem(SKEY);sessionStorage.removeItem(SKEY)}catch(e){}location.reload()}
 
 async function entrar(){
   $("#loginV").hidden=true;$("#app").hidden=false;
@@ -302,6 +311,7 @@ function rango(){
   return [d,d];
 }
 const suma=(a,b)=>S.cobros.filter(c=>c.fecha>=a&&c.fecha<=b).reduce((x,c)=>x+c.cob,0);
+const suma0=(a,b)=>S.cobros.filter(c=>c.fecha>=a&&c.fecha<=b).reduce((x,c)=>x+c.cob-c.prop,0);
 function anim(el,to,from){
   const t0=performance.now();
   (function f(t){const p=Math.min((t-t0)/500,1),e=1-Math.pow(1-p,3);el.textContent=fmt(from+(to-from)*e);if(p<1)requestAnimationFrame(f)})(t0);
@@ -309,10 +319,13 @@ function anim(el,to,from){
 function pintaCaja(){
   const d=S.dia,t=hoy(),l=lunes(d),mes=d.slice(0,7);
   S.vd=suma(d,d);S.vw=suma(l,addDays(l,6));S.vm=suma(mes+"-01",mes+"-31");
+  S.vd0=suma0(d,d);S.vw0=suma0(l,addDays(l,6));S.vm0=suma0(mes+"-01",mes+"-31");
   $("#hLab").textContent=d===t?"Ganancia de hoy":"Ganancia del "+bonita(d);
   $("#nx").disabled=d>=t;
   anim($("#hBig"),S.vd,S.vis);S.vis=S.vd;
+  anim($("#hBig0"),S.vd0,S.vis0);S.vis0=S.vd0;
   $("#cW").textContent=fmt(S.vw);$("#cM").textContent=fmt(S.vm);
+  $("#cW0").textContent="sin propina "+fmt(S.vw0);$("#cM0").textContent="sin propina "+fmt(S.vm0);
   const [a,b]=rango();
   const it=S.cobros.filter(c=>c.fecha>=a&&c.fecha<=b).sort((x,y)=>y.fecha<x.fecha?-1:y.fecha>x.fecha?1:y.id-x.id);
   const p=it.reduce((x,c)=>x+c.prop,0),ds=it.reduce((x,c)=>x+c.desc,0);
