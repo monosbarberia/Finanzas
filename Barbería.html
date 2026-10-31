@@ -7,6 +7,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1c3823">
 <title>Mono's · Caja</title>
+<link rel="icon" type="image/jpeg" href="favicon.jpg">
+<link rel="apple-touch-icon" href="favicon.jpg">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--g:#1c3823;--o:#cbb26a;--oh:#e0cca0;--soft:rgba(203,178,106,.06);--line:rgba(203,178,106,.28);--bad:#e9a79d}
@@ -15,7 +17,9 @@ html,body{margin:0;background:var(--g);color:var(--o);font-family:'Cormorant Gar
 body{min-height:100vh;overflow-x:hidden;padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 .wrap{max-width:550px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 14px) 16px 0}
 .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.brand{font-weight:700;letter-spacing:2px;font-size:1.15em;text-transform:uppercase}
+.logo{height:40px;width:auto;display:block;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45))}
+.login .logo{height:120px;margin:0 auto 12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:2px;font-size:1.15em;text-transform:uppercase}
 .tools{display:flex;gap:8px}
 button{font-family:inherit;color:var(--o);cursor:pointer}
 .ico{background:rgba(203,178,106,.12);border:1px solid var(--line);border-radius:6px;width:42px;height:42px;font-size:1.2em;transition:transform .12s,background .2s}
@@ -105,7 +109,7 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 4p
 
 <div id="loginV" class="login" hidden>
   <div class="box">
-    <h1>Mono's</h1><p>Caja y turnos</p>
+    <img class="logo" src="logo.png" alt="Mono's" onerror="this.style.display='none'"><h1>Mono's</h1><p>Caja y turnos</p>
     <input id="lEm" type="email" placeholder="Correo" autocomplete="username">
     <input id="lPw" type="password" placeholder="Contraseña" autocomplete="current-password">
     <label class="rem"><input type="checkbox" id="lRem" checked> Mantener sesión iniciada</label>
@@ -117,7 +121,7 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 4p
 <div id="app" hidden>
 <div class="wrap">
   <div class="top">
-    <div class="brand">Mono's</div>
+    <div class="brand"><img class="logo" src="logo.png" alt="" onerror="this.style.display='none'">Mono's</div>
     <div class="tools">
       <button class="ico" id="rf" onclick="recargar(true)" aria-label="Actualizar">&#8635;</button>
       <button class="ico" onclick="salir()" aria-label="Cerrar sesión">&#10162;</button>
@@ -187,6 +191,7 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 4p
 const SB_URL="https://ldxxflhwpyzldisydhmd.supabase.co";
 const SB_KEY="sb_publishable_zYVUWmP8r6s21WegS23RxQ_G-MOf1TH";
 const TZ="America/Havana";
+const DESDE="2026-10-23";
 const SLOTS=["9:00 AM","9:30 AM","10:00 AM","10:30 AM","11:00 AM","11:30 AM","2:00 PM","2:30 PM","3:00 PM","3:30 PM","4:00 PM"];
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -205,9 +210,10 @@ function mk(st){return window.supabase.createClient(SB_URL,SB_KEY,{auth:{storage
 function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("on"),1800)}
 
 async function init(){
-  for(const st of [localStorage,sessionStorage]){
-    try{const c=mk(st);const {data}=await c.auth.getSession();if(data.session){sb=c;return entrar()}}catch(e){}
-  }
+  const key="sb-"+SB_URL.split("//")[1].split(".")[0]+"-auth-token";
+  let st=null;
+  try{if(localStorage.getItem(key))st=localStorage;else if(sessionStorage.getItem(key))st=sessionStorage}catch(e){}
+  if(st){try{const c=mk(st);const {data}=await c.auth.getSession();if(data.session){sb=c;return entrar()}}catch(e){}}
   $("#loginV").hidden=false;
 }
 async function login(){
@@ -238,7 +244,7 @@ async function traerTodo(){
   for(;;){
     const {data,error}=await sb.from("turnos")
       .select("id,fecha,turno,nombre,telefono,reserva_id,servicios,total,precio_esperado,precio_cobrado,propina,descuento,no_show,no_show_cobrado")
-      .or("precio_cobrado.not.is.null,no_show.eq.true").order("id").range(from,from+999);
+      .gte("fecha",DESDE).or("precio_cobrado.not.is.null,no_show.eq.true").order("id").range(from,from+999);
     if(error)throw error;
     all=all.concat(data);if(data.length<1000)break;from+=1000;
   }
@@ -344,27 +350,35 @@ function ficha(k){
 /* ---------- INGRESAR GANANCIA ---------- */
 async function precios(){
   if(S.precios.length)return;
-  const {data}=await sb.from("precios").select("servicio,precio,orden").order("orden");
-  S.precios=data||[];
+  const {data,error}=await sb.from("precios").select("servicio,precio,orden").order("orden");
+  if(!error)S.precios=data||[];
 }
 let F={tipo:"corte",sel:new Set(),dirty:false};
-async function abrirIngreso(){
-  await precios();F={tipo:"corte",sel:new Set(),dirty:false};
-  const dl=[...S.cli.values()].map(c=>`<option value="${esc(c.nombre)}">`).join("");
-  abrir(`<div class="sh"><h3>Ingresar ganancia</h3><button class="ico" onclick="cerrar()">&#10005;</button></div>
-  <div class="seg" id="fSeg"><button class="on" data-t="corte">Corte extra</button><button data-t="extra">Ingreso extra</button></div>
-  <div id="fCorte"><input id="iNom" list="dlc" placeholder="Nombre del cliente" autocomplete="off" oninput="autoTel()"><datalist id="dlc">${dl}</datalist>
-  <input id="iTel" type="tel" inputmode="numeric" maxlength="8" placeholder="Teléfono (8 dígitos)">
-  <div class="chips" id="iSrv">${S.precios.map(p=>`<button type="button" class="chip" data-s="${esc(p.servicio)}" data-p="${p.precio}">${esc(p.servicio)} ${fmt(p.precio)}</button>`).join("")}</div></div>
-  <div id="fExtra" hidden><input id="iCon" placeholder="Concepto (ej. venta de producto)" maxlength="60"></div>
-  <label class="l">Fecha</label><input id="iFec" type="date" value="${hoy()}" max="${hoy()}">
-  <label class="l">Precio esperado</label><input id="iEsp" type="number" inputmode="decimal" placeholder="0" oninput="difer()">
-  <label class="l">Cobrado</label><input id="iCob" type="number" inputmode="decimal" placeholder="0" oninput="F.dirty=true;difer()">
-  <div class="dif" id="iDif"></div>
-  <button class="btn" style="margin:0" id="iOk" onclick="guardar()">Guardar</button>`);
-  $("#fSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;F.tipo=b.dataset.t;$$("#fSeg button").forEach(x=>x.classList.toggle("on",x===b));$("#fCorte").hidden=F.tipo!=="corte";$("#fExtra").hidden=F.tipo!=="extra"};
-  $("#iSrv").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;const s=b.dataset.s;F.sel.has(s)?F.sel.delete(s):F.sel.add(s);b.classList.toggle("on");
-    const t=$$("#iSrv .chip.on").reduce((x,c)=>x+num(c.dataset.p),0);$("#iEsp").value=t||"";if(!F.dirty)$("#iCob").value=t||"";difer()};
+function pintaChips(){
+  const el=$("#iSrv");if(!el)return;
+  el.innerHTML=S.precios.map(p=>`<button type="button" class="chip" data-s="${esc(p.servicio)}" data-p="${p.precio}">${esc(p.servicio)} ${fmt(p.precio)}</button>`).join("");
+}
+function abrirIngreso(){
+  try{
+    F={tipo:"corte",sel:new Set(),dirty:false};
+    const dl=[...S.cli.values()].map(c=>`<option value="${esc(c.nombre)}">`).join("");
+    abrir(`<div class="sh"><h3>Ingresar ganancia</h3><button class="ico" onclick="cerrar()">&#10005;</button></div>
+    <div class="seg" id="fSeg"><button class="on" data-t="corte">Corte extra</button><button data-t="extra">Ingreso extra</button></div>
+    <div id="fCorte"><input id="iNom" list="dlc" placeholder="Nombre del cliente" autocomplete="off" oninput="autoTel()"><datalist id="dlc">${dl}</datalist>
+    <input id="iTel" type="tel" inputmode="numeric" maxlength="8" placeholder="Teléfono (8 dígitos)">
+    <div class="chips" id="iSrv"></div></div>
+    <div id="fExtra" hidden><input id="iCon" placeholder="Concepto (ej. venta de producto)" maxlength="60"></div>
+    <label class="l">Fecha</label><input id="iFec" type="date" value="${hoy()}" max="${hoy()}">
+    <label class="l">Precio esperado</label><input id="iEsp" type="number" inputmode="decimal" placeholder="0" oninput="difer()">
+    <label class="l">Cobrado</label><input id="iCob" type="number" inputmode="decimal" placeholder="0" oninput="F.dirty=true;difer()">
+    <div class="dif" id="iDif"></div>
+    <button class="btn" style="margin:0" id="iOk" onclick="guardar()">Guardar</button>`);
+    $("#fSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;F.tipo=b.dataset.t;$$("#fSeg button").forEach(x=>x.classList.toggle("on",x===b));$("#fCorte").hidden=F.tipo!=="corte";$("#fExtra").hidden=F.tipo!=="extra"};
+    $("#iSrv").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;const s=b.dataset.s;F.sel.has(s)?F.sel.delete(s):F.sel.add(s);b.classList.toggle("on");
+      const t=$$("#iSrv .chip.on").reduce((x,c)=>x+num(c.dataset.p),0);$("#iEsp").value=t||"";if(!F.dirty)$("#iCob").value=t||"";difer()};
+    pintaChips();
+    precios().then(pintaChips).catch(()=>{});
+  }catch(e){toast("Error: "+e.message)}
 }
 function autoTel(){const n=$("#iNom").value.trim().toLowerCase();const c=[...S.cli.values()].find(c=>(c.nombre||"").toLowerCase()===n);if(c&&c.tel&&!$("#iTel").value)$("#iTel").value=c.tel}
 function difer(){
@@ -451,6 +465,8 @@ $(".tabs").onclick=e=>{const b=e.target.closest("button");if(!b)return;
   $$(".view").forEach(v=>v.classList.toggle("on",v.id==="v-"+b.dataset.v));window.scrollTo(0,0)};
 function abrir(h){$("#sheet").innerHTML=h;$("#ov").classList.add("on")}
 function cerrar(){$("#ov").classList.remove("on")}
+window.addEventListener("error",e=>toast("Error: "+e.message));
+window.addEventListener("unhandledrejection",e=>toast("Error: "+((e.reason&&e.reason.message)||"desconocido")));
 init();
 </script>
 </body>
