@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1c3823">
+<title>Mono's · Caja</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--g:#1c3823;--o:#cbb26a;--oh:#e0cca0;--soft:rgba(203,178,106,.06);--line:rgba(203,178,106,.28);--bad:#e9a79d}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--g);color:var(--o);font-family:'Cormorant Garamond',serif;font-size:18px}
+body{min-height:100vh;overflow-x:hidden;padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+.wrap{max-width:550px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 14px) 16px 0}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.brand{font-weight:700;letter-spacing:2px;font-size:1.15em;text-transform:uppercase}
+.tools{display:flex;gap:8px}
+button{font-family:inherit;color:var(--o);cursor:pointer}
+.ico{background:rgba(203,178,106,.12);border:1px solid var(--line);border-radius:6px;width:42px;height:42px;font-size:1.2em;transition:transform .12s,background .2s}
+.ico:active,.pill:active,.chip:active,.row:active,.card:active{transform:scale(.95)}
+.spin{animation:sp .7s linear}
+@keyframes sp{to{transform:rotate(360deg)}}
+.box{background:var(--soft);border:1px solid rgba(203,178,106,.2);border-radius:8px;padding:22px 18px;margin-bottom:16px;box-shadow:0 15px 40px rgba(0,0,0,.35)}
+.hero{text-align:center;padding:26px 14px 22px}
+.hlab{font-size:1.05em;font-style:italic;opacity:.8}
+.nav{display:flex;align-items:center;justify-content:center;gap:14px}
+.nav button{background:none;border:0;font-size:1.8em;padding:4px 10px;transition:transform .12s}
+.nav button:active{transform:scale(.8)}.nav button:disabled{opacity:.2}
+.big{font-size:4.6em;font-weight:700;line-height:1;margin:6px 0 14px;color:#fff;letter-spacing:1px}
+.pill{background:transparent;border:1px solid var(--o);border-radius:20px;padding:7px 16px;font-size:.9em;font-weight:700;letter-spacing:1px;text-transform:uppercase;transition:all .15s}
+.pill.ok{background:var(--o);color:var(--g)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.card{background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:8px;padding:14px;transition:transform .12s;position:relative}
+.card small{display:block;font-style:italic;opacity:.75}
+.card b{font-size:1.7em;color:#fff}
+.card .cp{position:absolute;top:8px;right:8px;background:none;border:0;font-size:1.05em;padding:6px;opacity:.8}
+.btn{background:var(--o);color:var(--g);border:0;border-radius:6px;padding:17px;width:100%;font-size:1.3em;font-weight:700;letter-spacing:1px;text-transform:uppercase;box-shadow:0 5px 0 #8f7c42,0 10px 18px rgba(0,0,0,.35);transition:transform .1s,box-shadow .1s;margin-bottom:22px}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 #8f7c42,0 3px 6px rgba(0,0,0,.35)}
+.btn.sm{font-size:1.1em;padding:13px;margin:0}
+.btn:disabled{opacity:.45}
+.btn.ghost{background:transparent;color:var(--o);border:1px solid var(--o);box-shadow:none}
+.btn.ghost:active{transform:scale(.97);background:rgba(203,178,106,.15)}
+.seg{display:flex;gap:6px;margin-bottom:12px}
+.seg button{flex:1;background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:6px;padding:10px 4px;font-size:1em;font-weight:600;transition:all .15s}
+.seg button.on{background:var(--o);color:var(--g);border-color:var(--o)}
+.seg button:active{transform:scale(.96)}
+.sum{font-style:italic;opacity:.8;font-size:.95em;margin:2px 2px 10px}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:13px 4px;border-bottom:1px solid rgba(203,178,106,.14);cursor:pointer;transition:transform .12s,background .2s}
+.row:last-child{border:0}
+.row b{font-size:1.1em}.row small{display:block;opacity:.7;font-size:.88em}
+.amt{text-align:right;font-weight:700;color:#fff;font-size:1.15em;white-space:nowrap}
+.amt small{font-weight:400;color:var(--o)}
+.tag{display:inline-block;border:1px solid var(--line);border-radius:10px;padding:0 8px;font-size:.8em;margin-left:4px}
+.debt{color:var(--bad);border-color:var(--bad)}
+.empty{text-align:center;opacity:.6;font-style:italic;padding:22px 0}
+input,select{width:100%;background:rgba(0,0,0,.25);color:var(--o);border:1px solid rgba(203,178,106,.5);border-radius:6px;padding:15px;font-family:inherit;font-size:1.15em;outline:none;margin-bottom:12px;-webkit-appearance:none;appearance:none}
+input:focus{border-color:var(--o)}
+input::placeholder{color:rgba(203,178,106,.45)}
+input[type=date]{min-height:54px}
+input[type=date]::-webkit-calendar-picker-indicator{filter:invert(75%) sepia(40%) saturate(400%) hue-rotate(5deg)}
+label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 4px 2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:6px;padding:10px 12px;font-size:1em;transition:all .15s}
+.chip.on{background:var(--o);color:var(--g);font-weight:700;border-color:var(--o)}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0 16px}
+.slot{padding:14px 4px;text-align:center;line-height:1.1}
+.slot small{display:block;font-size:.7em;opacity:.8;margin-top:3px}
+.slot.booked{opacity:.4;border-style:dashed}
+.slot.blk{border-color:var(--bad);color:var(--bad)}
+.slot.blk.on{background:var(--bad);color:var(--g);border-color:var(--bad)}
+.dif{min-height:26px;text-align:center;font-style:italic;margin-bottom:10px}
+.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:rgba(20,45,25,.97);border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom));backdrop-filter:blur(8px);z-index:50}
+.tabs button{flex:1;background:none;border:0;border-radius:6px;padding:11px 0;font-size:1.05em;letter-spacing:1px;text-transform:uppercase;opacity:.6;transition:all .15s}
+.tabs button.on{opacity:1;background:rgba(203,178,106,.16);font-weight:700}
+.tabs button:active{transform:scale(.93)}
+.view{display:none}.view.on{display:block;animation:in .25s ease}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:none;align-items:flex-end;justify-content:center;animation:fd .2s}
+.ov.on{display:flex}
+@keyframes fd{from{opacity:0}to{opacity:1}}
+.sheet{background:#1c3823;border:1px solid var(--line);border-radius:14px 14px 0 0;width:100%;max-width:550px;max-height:92vh;overflow-y:auto;padding:20px 18px calc(24px + env(safe-area-inset-bottom));animation:up .28s cubic-bezier(.2,.9,.3,1)}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+.sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.sh h3{margin:0;font-size:1.4em;text-transform:uppercase;letter-spacing:1px}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.stats div{background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:6px;padding:10px 6px;text-align:center}
+.stats b{display:block;color:#fff;font-size:1.2em}.stats small{font-style:italic;opacity:.75;font-size:.85em}
+.alert{border:1px solid var(--bad);color:var(--bad);border-radius:6px;padding:12px;margin-bottom:14px;text-align:center}
+.toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--o);color:var(--g);padding:11px 20px;border-radius:24px;font-weight:700;opacity:0;pointer-events:none;transition:all .25s;z-index:300}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login .box{width:100%;max-width:420px}
+.login h1{text-align:center;text-transform:uppercase;letter-spacing:3px;font-size:1.7em;margin:0 0 4px}
+.login p{text-align:center;font-style:italic;opacity:.7;margin:0 0 22px}
+.rem{display:flex;gap:10px;align-items:center;margin:2px 0 18px;font-weight:600;cursor:pointer}
+.rem input{width:20px;height:20px;margin:0;accent-color:var(--o)}
+.err{color:var(--bad);text-align:center;min-height:22px;margin-bottom:8px}
+[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div id="loginV" class="login" hidden>
+  <div class="box">
+    <h1>Mono's</h1><p>Caja y turnos</p>
+    <input id="lEm" type="email" placeholder="Correo" autocomplete="username">
+    <input id="lPw" type="password" placeholder="Contraseña" autocomplete="current-password">
+    <label class="rem"><input type="checkbox" id="lRem" checked> Mantener sesión iniciada</label>
+    <div class="err" id="lErr"></div>
+    <button class="btn" style="margin:0" id="lBtn" onclick="login()">Entrar</button>
+  </div>
+</div>
+
+<div id="app" hidden>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">Mono's</div>
+    <div class="tools">
+      <button class="ico" id="rf" onclick="recargar(true)" aria-label="Actualizar">&#8635;</button>
+      <button class="ico" onclick="salir()" aria-label="Cerrar sesión">&#10162;</button>
+    </div>
+  </div>
+
+  <section class="view on" id="v-caja">
+    <div class="box hero">
+      <div class="nav">
+        <button onclick="moverDia(-1)" aria-label="Día anterior">&#8249;</button>
+        <div class="hlab" id="hLab"></div>
+        <button id="nx" onclick="moverDia(1)" aria-label="Día siguiente">&#8250;</button>
+      </div>
+      <div class="big" id="hBig">$0</div>
+      <button class="pill" id="hCp" onclick="copiar(S.vd,this)">Copiar</button>
+    </div>
+    <div class="grid2">
+      <div class="card"><button class="cp" onclick="copiar(S.vw,this)" aria-label="Copiar semana">&#10064;</button><small>Semana</small><b id="cW">$0</b></div>
+      <div class="card"><button class="cp" onclick="copiar(S.vm,this)" aria-label="Copiar mes">&#10064;</button><small>Mes</small><b id="cM">$0</b></div>
+    </div>
+    <button class="btn" onclick="abrirIngreso()">+ Ingresar ganancia</button>
+    <div class="box">
+      <div class="seg" id="perSeg">
+        <button data-p="dia" class="on">Día</button><button data-p="sem">Semana</button><button data-p="mes">Mes</button>
+      </div>
+      <div class="sum" id="perSum"></div>
+      <div id="lista"></div>
+    </div>
+  </section>
+
+  <section class="view" id="v-cli">
+    <div class="box">
+      <input id="cBus" type="text" placeholder="Buscar cliente" oninput="pintaCli()">
+      <div class="seg" id="cliSeg"><button data-f="todos" class="on">Todos</button><button data-f="deben">Deben turno</button></div>
+      <div id="cliLista"></div>
+    </div>
+  </section>
+
+  <section class="view" id="v-blq">
+    <div class="box">
+      <label class="l">Día</label>
+      <input type="date" id="bFec" onchange="S.bdia=this.value;cargarBloq()">
+      <div id="bMsg"></div>
+      <div class="slots" id="slots"></div>
+      <div class="grid2" style="margin:0 0 12px">
+        <button class="btn sm" onclick="bloquear(false)" id="bBl">Bloquear</button>
+        <button class="btn sm ghost" onclick="liberar()" id="bLi">Liberar</button>
+      </div>
+      <button class="btn sm ghost" onclick="bloquear(true)">Bloquear día completo</button>
+    </div>
+    <div class="box"><h3 style="margin:0 0 8px;font-size:1.2em;text-transform:uppercase;letter-spacing:1px">Próximos bloqueos</h3><div id="bProx"></div></div>
+  </section>
+</div>
+
+<nav class="tabs">
+  <button class="on" data-v="caja">Caja</button>
+  <button data-v="cli">Clientes</button>
+  <button data-v="blq">Bloqueos</button>
+</nav>
+</div>
+
+<div class="ov" id="ov" onclick="if(event.target===this)cerrar()"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SB_URL="https://ldxxflhwpyzldisydhmd.supabase.co";
+const SB_KEY="sb_publishable_zYVUWmP8r6s21WegS23RxQ_G-MOf1TH";
+const TZ="America/Havana";
+const SLOTS=["9:00 AM","9:30 AM","10:00 AM","10:30 AM","11:00 AM","11:30 AM","2:00 PM","2:30 PM","3:00 PM","3:30 PM","4:00 PM"];
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const hoy=()=>new Intl.DateTimeFormat("en-CA",{timeZone:TZ}).format(new Date());
+const hms=()=>new Intl.DateTimeFormat("en-GB",{timeZone:TZ,hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(new Date()).replace(/:/g,"");
+const addDays=(s,n)=>{const d=new Date(s+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+const lunes=s=>addDays(s,-((new Date(s+"T00:00:00Z").getUTCDay()+6)%7));
+const bonita=s=>new Intl.DateTimeFormat("es",{timeZone:"UTC",weekday:"short",day:"numeric",month:"short"}).format(new Date(s+"T00:00:00Z"));
+const fmt=n=>"$"+Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,".");
+const num=v=>{const n=parseFloat(String(v).replace(",","."));return isFinite(n)?n:0};
+
+let sb=null;
+const S={dia:hoy(),per:"dia",cobros:[],cli:new Map(),precios:[],bdia:hoy(),bd:[],bsel:new Set(),filtro:"todos",vd:0,vw:0,vm:0,vis:0};
+
+function mk(st){return window.supabase.createClient(SB_URL,SB_KEY,{auth:{storage:st,persistSession:true,autoRefreshToken:true}})}
+function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("on"),1800)}
+
+async function init(){
+  for(const st of [localStorage,sessionStorage]){
+    try{const c=mk(st);const {data}=await c.auth.getSession();if(data.session){sb=c;return entrar()}}catch(e){}
+  }
+  $("#loginV").hidden=false;
+}
+async function login(){
+  const em=$("#lEm").value.trim(),pw=$("#lPw").value;
+  if(!em||!pw){$("#lErr").textContent="Escribe correo y contraseña";return}
+  const b=$("#lBtn");b.disabled=true;b.textContent="Entrando...";$("#lErr").textContent="";
+  try{
+    const c=mk($("#lRem").checked?localStorage:sessionStorage);
+    const {error}=await c.auth.signInWithPassword({email:em,password:pw});
+    if(error)throw error;
+    sb=c;entrar();
+  }catch(e){$("#lErr").textContent="Correo o contraseña incorrectos"}
+  b.disabled=false;b.textContent="Entrar";
+}
+async function salir(){try{await sb.auth.signOut()}catch(e){}location.reload()}
+
+async function entrar(){
+  $("#loginV").hidden=true;$("#app").hidden=false;
+  const {data}=await sb.rpc("es_admin");
+  if(data===false){alert("Este usuario no tiene permisos de administrador.");return salir()}
+  $("#bFec").min=hoy();$("#bFec").value=S.bdia;
+  await recargar();cargarBloq();
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)recargar()});
+}
+
+async function traerTodo(){
+  let all=[],from=0;
+  for(;;){
+    const {data,error}=await sb.from("turnos")
+      .select("id,fecha,turno,nombre,telefono,reserva_id,servicios,total,precio_esperado,precio_cobrado,propina,descuento,no_show,no_show_cobrado")
+      .or("precio_cobrado.not.is.null,no_show.eq.true").order("id").range(from,from+999);
+    if(error)throw error;
+    all=all.concat(data);if(data.length<1000)break;from+=1000;
+  }
+  return all;
+}
+const keyCli=(tel,nom)=>tel&&tel.trim()?tel.trim():"n:"+String(nom||"").toLowerCase().trim();
+
+function construir(rows){
+  const m=new Map();
+  rows.forEach(r=>{
+    const k=r.reserva_id||("id"+r.id);let g=m.get(k);
+    if(!g){g={k,id:r.id,fecha:r.fecha,nombre:r.nombre,tel:r.telefono,serv:r.servicios,esp:0,cob:null,prop:0,desc:0,ns:false,nsc:false};m.set(k,g)}
+    if(r.precio_cobrado!=null)g.cob=Math.max(g.cob??0,+r.precio_cobrado);
+    g.esp=Math.max(g.esp,+(r.precio_esperado??r.total??0));
+    g.prop=Math.max(g.prop,+(r.propina||0));g.desc=Math.max(g.desc,+(r.descuento||0));
+    if(r.no_show)g.ns=true;if(r.no_show_cobrado)g.nsc=true;
+    if(r.fecha<g.fecha)g.fecha=r.fecha;
+  });
+  const res=[...m.values()];
+  res.forEach(g=>{
+    g.key=keyCli(g.tel,g.nombre);
+    if(g.cob!=null&&g.esp>0){
+      if(!g.prop)g.prop=Math.max(g.cob-g.esp,0);
+      if(!g.desc)g.desc=Math.max(g.esp-g.cob,0);
+    }
+  });
+  return res;
+}
+
+async function recargar(manual){
+  const rf=$("#rf");rf.classList.remove("spin");void rf.offsetWidth;rf.classList.add("spin");
+  try{
+    const res=construir(await traerTodo());
+    S.cobros=res.filter(g=>g.cob!=null);
+    const cm=new Map();
+    res.sort((a,b)=>b.fecha<a.fecha?-1:b.fecha>a.fecha?1:0).forEach(g=>{
+      if(g.nombre==="Ingreso extra")return;
+      let c=cm.get(g.key);
+      if(!c){c=cm.set(g.key,{key:g.key,nombre:g.nombre,tel:g.tel,items:[],total:0,vis:0,prop:0,desc:0,ns:0,deuda:0,nDeuda:0}).get(g.key)}
+      c.items.push(g);
+      if(g.cob!=null){c.total+=g.cob;c.vis++;c.prop+=g.prop;c.desc+=g.desc}
+      if(g.ns){c.ns++;if(!g.nsc){c.nDeuda++;c.deuda+=g.esp}}
+    });
+    S.cli=cm;
+    pintaCaja();pintaCli();
+    if(manual)toast("Actualizado");
+  }catch(e){toast("No se pudo cargar. Revisa la conexión")}
+}
+
+/* ---------- CAJA ---------- */
+function rango(){
+  const d=S.dia,l=lunes(d);
+  if(S.per==="sem")return [l,addDays(l,6)];
+  if(S.per==="mes")return [d.slice(0,7)+"-01",d.slice(0,7)+"-31"];
+  return [d,d];
+}
+const suma=(a,b)=>S.cobros.filter(c=>c.fecha>=a&&c.fecha<=b).reduce((x,c)=>x+c.cob,0);
+function anim(el,to,from){
+  const t0=performance.now();
+  (function f(t){const p=Math.min((t-t0)/500,1),e=1-Math.pow(1-p,3);el.textContent=fmt(from+(to-from)*e);if(p<1)requestAnimationFrame(f)})(t0);
+}
+function pintaCaja(){
+  const d=S.dia,t=hoy(),l=lunes(d),mes=d.slice(0,7);
+  S.vd=suma(d,d);S.vw=suma(l,addDays(l,6));S.vm=suma(mes+"-01",mes+"-31");
+  $("#hLab").textContent=d===t?"Ganancia de hoy":"Ganancia del "+bonita(d);
+  $("#nx").disabled=d>=t;
+  anim($("#hBig"),S.vd,S.vis);S.vis=S.vd;
+  $("#cW").textContent=fmt(S.vw);$("#cM").textContent=fmt(S.vm);
+  const [a,b]=rango();
+  const it=S.cobros.filter(c=>c.fecha>=a&&c.fecha<=b).sort((x,y)=>y.fecha<x.fecha?-1:y.fecha>x.fecha?1:y.id-x.id);
+  const p=it.reduce((x,c)=>x+c.prop,0),ds=it.reduce((x,c)=>x+c.desc,0);
+  $("#perSum").textContent=it.length?`${it.length} cobros · propinas ${fmt(p)} · descuentos ${fmt(ds)}`:"";
+  $("#lista").innerHTML=it.length?it.map(c=>`<div class="row" onclick="ficha('${esc(c.key).replace(/'/g,"\\'")}')"><div><b>${esc(c.nombre||"Sin nombre")}</b><small>${esc(c.serv||"")}${S.per!=="dia"?" · "+bonita(c.fecha):""}</small></div><div class="amt">${fmt(c.cob)}<small>${c.prop?`<span class="tag">+${fmt(c.prop)}</span>`:""}${c.desc?`<span class="tag">−${fmt(c.desc)}</span>`:""}</small></div></div>`).join(""):'<div class="empty">Todavía no hay cobros en este periodo</div>';
+}
+function moverDia(n){const d=addDays(S.dia,n);if(d>hoy())return;S.dia=d;pintaCaja()}
+$("#perSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;S.per=b.dataset.p;$$("#perSeg button").forEach(x=>x.classList.toggle("on",x===b));pintaCaja()};
+
+async function copiar(n,btn){
+  const txt=String(Math.round(n*100)/100);
+  try{await navigator.clipboard.writeText(txt)}catch(e){const a=document.createElement("textarea");a.value=txt;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove()}
+  toast("Copiado: "+txt);
+  if(btn.classList.contains("pill")){btn.classList.add("ok");btn.textContent="Copiado";setTimeout(()=>{btn.classList.remove("ok");btn.textContent="Copiar"},1200)}
+}
+
+/* ---------- CLIENTES ---------- */
+$("#cliSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;S.filtro=b.dataset.f;$$("#cliSeg button").forEach(x=>x.classList.toggle("on",x===b));pintaCli()};
+function pintaCli(){
+  const q=($("#cBus").value||"").toLowerCase().trim();
+  let l=[...S.cli.values()].filter(c=>(S.filtro==="todos"||c.nDeuda>0)&&(!q||(c.nombre||"").toLowerCase().includes(q)||(c.tel||"").includes(q)));
+  l.sort((a,b)=>b.nDeuda-a.nDeuda||b.total-a.total);
+  $("#cliLista").innerHTML=l.length?l.map(c=>`<div class="row" onclick="ficha('${esc(c.key).replace(/'/g,"\\'")}')"><div><b>${esc(c.nombre||"Sin nombre")}</b><small>${c.vis} visitas${c.vis?" · prom. "+fmt(c.total/c.vis):""}${c.nDeuda?`<span class="tag debt">Debe ${c.nDeuda} turno${c.nDeuda>1?"s":""} · ${fmt(c.deuda)}</span>`:""}</small></div><div class="amt">${fmt(c.total)}</div></div>`).join(""):'<div class="empty">No hay clientes que mostrar</div>';
+}
+function ficha(k){
+  const c=S.cli.get(k);if(!c){toast("Este cobro no tiene ficha");return}
+  const it=c.items.map(g=>`<div class="row" style="cursor:default"><div><b>${bonita(g.fecha)}</b><small>${esc(g.serv||"")}${g.ns?`<span class="tag ${g.nsc?"":"debt"}">No vino${g.nsc?" · pagado":""}</span>`:""}</small></div><div class="amt">${g.cob!=null?fmt(g.cob):"—"}<small>${g.prop?`<span class="tag">+${fmt(g.prop)}</span>`:""}${g.desc?`<span class="tag">−${fmt(g.desc)}</span>`:""}</small></div></div>`).join("");
+  abrir(`<div class="sh"><h3>${esc(c.nombre||"Cliente")}</h3><button class="ico" onclick="cerrar()">&#10005;</button></div>
+  <div class="sum" style="margin-bottom:12px">${esc(c.tel||"Sin teléfono")}</div>
+  ${c.nDeuda?`<div class="alert">Debe ${c.nDeuda} turno${c.nDeuda>1?"s":""} por no asistir: ${fmt(c.deuda)}</div>`:""}
+  <div class="stats"><div><b>${fmt(c.total)}</b><small>Ingresado</small></div><div><b>${c.vis}</b><small>Visitas</small></div><div><b>${c.vis?fmt(c.total/c.vis):"$0"}</b><small>Promedio</small></div>
+  <div><b>${fmt(c.prop)}</b><small>Propinas</small></div><div><b>${fmt(c.desc)}</b><small>Descuentos</small></div><div><b>${c.ns}</b><small>No vino</small></div></div>${it}`);
+}
+
+/* ---------- INGRESAR GANANCIA ---------- */
+async function precios(){
+  if(S.precios.length)return;
+  const {data}=await sb.from("precios").select("servicio,precio,orden").order("orden");
+  S.precios=data||[];
+}
+let F={tipo:"corte",sel:new Set(),dirty:false};
+async function abrirIngreso(){
+  await precios();F={tipo:"corte",sel:new Set(),dirty:false};
+  const dl=[...S.cli.values()].map(c=>`<option value="${esc(c.nombre)}">`).join("");
+  abrir(`<div class="sh"><h3>Ingresar ganancia</h3><button class="ico" onclick="cerrar()">&#10005;</button></div>
+  <div class="seg" id="fSeg"><button class="on" data-t="corte">Corte extra</button><button data-t="extra">Ingreso extra</button></div>
+  <div id="fCorte"><input id="iNom" list="dlc" placeholder="Nombre del cliente" autocomplete="off" oninput="autoTel()"><datalist id="dlc">${dl}</datalist>
+  <input id="iTel" type="tel" inputmode="numeric" maxlength="8" placeholder="Teléfono (8 dígitos)">
+  <div class="chips" id="iSrv">${S.precios.map(p=>`<button type="button" class="chip" data-s="${esc(p.servicio)}" data-p="${p.precio}">${esc(p.servicio)} ${fmt(p.precio)}</button>`).join("")}</div></div>
+  <div id="fExtra" hidden><input id="iCon" placeholder="Concepto (ej. venta de producto)" maxlength="60"></div>
+  <label class="l">Fecha</label><input id="iFec" type="date" value="${hoy()}" max="${hoy()}">
+  <label class="l">Precio esperado</label><input id="iEsp" type="number" inputmode="decimal" placeholder="0" oninput="difer()">
+  <label class="l">Cobrado</label><input id="iCob" type="number" inputmode="decimal" placeholder="0" oninput="F.dirty=true;difer()">
+  <div class="dif" id="iDif"></div>
+  <button class="btn" style="margin:0" id="iOk" onclick="guardar()">Guardar</button>`);
+  $("#fSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;F.tipo=b.dataset.t;$$("#fSeg button").forEach(x=>x.classList.toggle("on",x===b));$("#fCorte").hidden=F.tipo!=="corte";$("#fExtra").hidden=F.tipo!=="extra"};
+  $("#iSrv").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;const s=b.dataset.s;F.sel.has(s)?F.sel.delete(s):F.sel.add(s);b.classList.toggle("on");
+    const t=$$("#iSrv .chip.on").reduce((x,c)=>x+num(c.dataset.p),0);$("#iEsp").value=t||"";if(!F.dirty)$("#iCob").value=t||"";difer()};
+}
+function autoTel(){const n=$("#iNom").value.trim().toLowerCase();const c=[...S.cli.values()].find(c=>(c.nombre||"").toLowerCase()===n);if(c&&c.tel&&!$("#iTel").value)$("#iTel").value=c.tel}
+function difer(){
+  const e=num($("#iEsp").value),c=num($("#iCob").value);
+  $("#iDif").textContent=!c?"":(e&&c>e)?"Propina: "+fmt(c-e):(e&&c<e)?"Descuento: "+fmt(e-c):"Sin propina ni descuento";
+}
+async function guardar(){
+  const cob=num($("#iCob").value);let esp=num($("#iEsp").value);const fec=$("#iFec").value;
+  if(!(cob>0))return toast("Escribe cuánto cobraste");
+  if(!fec)return toast("Elige la fecha");
+  if(!esp)esp=cob;
+  let nombre,tel=null,serv;
+  if(F.tipo==="corte"){
+    nombre=$("#iNom").value.trim();tel=$("#iTel").value.trim()||null;
+    if(!nombre)return toast("Escribe el nombre del cliente");
+    if(tel&&!/^[0-9]{8}$/.test(tel))return toast("El teléfono debe tener 8 dígitos");
+    serv=[...F.sel].join(", ")||"Corte extra";
+  }else{
+    nombre="Ingreso extra";serv="Extra: "+($("#iCon").value.trim()||"ingreso");
+  }
+  const row={fecha:fec,turno:"Extra "+hms(),estado:"ocupado",nombre,telefono:tel,reserva_id:crypto.randomUUID(),notificado:true,
+    servicios:serv,total:Math.round(esp),precio_esperado:esp,precio_cobrado:cob,propina:Math.max(cob-esp,0),descuento:Math.max(esp-cob,0),no_show:false,cancelado:false};
+  const b=$("#iOk");b.disabled=true;b.textContent="Guardando...";
+  const {error}=await sb.from("turnos").insert(row);
+  b.disabled=false;b.textContent="Guardar";
+  if(error){
+    if((error.message||"").includes("LIMITE_SEMANAL"))toast("Ese teléfono ya tiene 3 citas esta semana");
+    else if(error.code==="23505")toast("Intenta de nuevo");
+    else toast("No se pudo guardar");
+    return;
+  }
+  cerrar();toast("Guardado");S.dia=fec;await recargar();
+}
+
+/* ---------- BLOQUEOS ---------- */
+async function cargarBloq(){
+  const f=S.bdia;S.bsel=new Set();
+  const dom=new Date(f+"T00:00:00Z").getUTCDay()===0;
+  $("#bMsg").innerHTML=dom?'<div class="empty">Cerrado los domingos</div>':"";
+  if(dom){S.bd=[];pintaSlots();proximos();return}
+  const {data,error}=await sb.from("turnos").select("id,turno,nombre").eq("fecha",f);
+  if(error)return toast("No se pudo cargar el día");
+  S.bd=data||[];pintaSlots();proximos();
+}
+function estadoSlot(s){const r=S.bd.find(x=>x.turno===s);return !r?"free":(r.nombre?"booked":"blk")}
+function pintaSlots(){
+  const dom=new Date(S.bdia+"T00:00:00Z").getUTCDay()===0;
+  $("#slots").innerHTML=dom?"":SLOTS.map(s=>{
+    const e=estadoSlot(s),r=S.bd.find(x=>x.turno===s),on=S.bsel.has(s)?" on":"";
+    return `<button class="chip slot ${e}${on}" data-s="${s}" ${e==="booked"?"disabled":""}>${s.replace(" ","&nbsp;")}<small>${e==="booked"?esc(r.nombre):e==="blk"?"Bloqueado":"Libre"}</small></button>`}).join("");
+  const n=[...S.bsel];
+  $("#bBl").disabled=!n.some(s=>estadoSlot(s)==="free");
+  $("#bLi").disabled=!n.some(s=>estadoSlot(s)==="blk");
+}
+$("#slots").onclick=e=>{const b=e.target.closest(".slot");if(!b||b.disabled)return;const s=b.dataset.s;S.bsel.has(s)?S.bsel.delete(s):S.bsel.add(s);pintaSlots()};
+async function bloquear(todo){
+  const f=S.bdia;
+  const libres=(todo?SLOTS:[...S.bsel]).filter(s=>estadoSlot(s)==="free");
+  if(!libres.length)return toast("No hay turnos libres que bloquear");
+  if(todo&&!confirm("¿Bloquear todos los turnos libres del "+bonita(f)+"?"))return;
+  const rows=libres.map(s=>({fecha:f,turno:s,estado:"ocupado",nombre:null,telefono:null,reserva_id:"bloqueo-"+f,notificado:true,servicios:"BLOQUEO"}));
+  const {error}=await sb.from("turnos").insert(rows);
+  if(error){toast("No se pudo bloquear");return cargarBloq()}
+  toast(libres.length+" turno"+(libres.length>1?"s":"")+" bloqueado"+(libres.length>1?"s":""));cargarBloq();
+}
+async function liberar(){
+  const ids=[...S.bsel].filter(s=>estadoSlot(s)==="blk").map(s=>S.bd.find(x=>x.turno===s).id);
+  if(!ids.length)return;
+  const {error}=await sb.from("turnos").delete().in("id",ids);
+  if(error)return toast("No se pudo liberar");
+  toast("Liberado");cargarBloq();
+}
+async function proximos(){
+  const {data}=await sb.from("turnos").select("fecha,turno").is("nombre",null).gte("fecha",hoy()).order("fecha");
+  const m={};(data||[]).forEach(r=>m[r.fecha]=(m[r.fecha]||0)+1);
+  const k=Object.keys(m);
+  $("#bProx").innerHTML=k.length?k.map(f=>`<div class="row" onclick="irDia('${f}')"><b>${bonita(f)}</b><div class="amt" style="font-weight:400">${m[f]>=SLOTS.length?"Día completo":m[f]+" turnos"}</div></div>`).join(""):'<div class="empty">No hay bloqueos próximos</div>';
+}
+function irDia(f){S.bdia=f;$("#bFec").value=f;cargarBloq()}
+
+/* ---------- UI común ---------- */
+$(".tabs").onclick=e=>{const b=e.target.closest("button");if(!b)return;
+  $$(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
+  $$(".view").forEach(v=>v.classList.toggle("on",v.id==="v-"+b.dataset.v));window.scrollTo(0,0)};
+function abrir(h){$("#sheet").innerHTML=h;$("#ov").classList.add("on")}
+function cerrar(){$("#ov").classList.remove("on")}
+init();
+</script>
+</body>
+</html>
