@@ -102,7 +102,9 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 4p
 .login h1{text-align:center;text-transform:uppercase;letter-spacing:3px;font-size:1.7em;margin:0 0 4px}
 .login p{text-align:center;font-style:italic;opacity:.7;margin:0 0 22px}
 .rem{display:flex;gap:10px;align-items:center;margin:2px 0 18px;font-weight:600;cursor:pointer}
-.rem input{width:20px;height:20px;margin:0;accent-color:var(--o)}
+.rem input{width:26px;height:26px;margin:0;padding:0;flex-shrink:0;border:1.5px solid var(--o);border-radius:6px;background:rgba(0,0,0,.25);cursor:pointer;transition:all .15s}
+.rem input:checked{background:var(--o) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='%231c3823' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/></svg>") center/75% no-repeat}
+.rem small{display:block;font-weight:400;font-style:italic;opacity:.7;font-size:.85em;margin-top:2px}
 .err{color:var(--bad);text-align:center;min-height:22px;margin-bottom:8px}
 [hidden]{display:none!important}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -115,7 +117,7 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 4p
     <img class="logo" src="logo.png" alt="Mono's" onerror="this.style.display='none'"><p>Caja y turnos</p>
     <input id="lEm" type="email" placeholder="Correo" autocomplete="username">
     <input id="lPw" type="password" placeholder="Contraseña" autocomplete="current-password">
-    <label class="rem"><input type="checkbox" id="lRem" checked> Mantener sesión iniciada</label>
+    <label class="rem"><input type="checkbox" id="lRem" checked><span>Mantener sesión iniciada<small id="lHint"></small></span></label>
     <div class="err" id="lErr"></div>
     <button class="btn" style="margin:0" id="lBtn" onclick="login()">Entrar</button>
   </div>
@@ -216,6 +218,8 @@ const SKEY="sb-"+SB_URL.split("//")[1].split(".")[0]+"-auth-token";
 function mk(persist){return window.supabase.createClient(SB_URL,SB_KEY,{auth:persist?{storage:localStorage,persistSession:true,autoRefreshToken:true}:{persistSession:false,autoRefreshToken:true}})}
 function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("on"),1800)}
 
+function hintRem(){$("#lHint").textContent=$("#lRem").checked?"Se mantendrá abierta en este teléfono":"Al refrescar o cerrar, pedirá la contraseña"}
+$("#lRem").onchange=hintRem;hintRem();
 async function init(){
   try{sessionStorage.removeItem(SKEY)}catch(e){}
   let guardada=false;
@@ -275,9 +279,10 @@ function construir(rows){
   const res=[...m.values()];
   res.forEach(g=>{
     g.key=keyCli(g.tel,g.nombre);
-    if(g.cob!=null&&g.esp>0){
-      if(!g.prop)g.prop=Math.max(g.cob-g.esp,0);
-      if(!g.desc)g.desc=Math.max(g.esp-g.cob,0);
+    if(g.cob!=null){
+      if(!g.desc&&g.esp>0)g.desc=Math.max(g.esp-g.cob,0);
+      g.sin=g.cob;            // sin propina = precio cobrado
+      g.con=g.cob+g.prop;     // con propina = precio cobrado + columna propina
     }
   });
   return res;
@@ -294,7 +299,7 @@ async function recargar(manual){
       let c=cm.get(g.key);
       if(!c){c=cm.set(g.key,{key:g.key,nombre:g.nombre,tel:g.tel,items:[],total:0,vis:0,prop:0,desc:0,ns:0,deuda:0,nDeuda:0}).get(g.key)}
       c.items.push(g);
-      if(g.cob!=null){c.total+=g.cob;c.vis++;c.prop+=g.prop;c.desc+=g.desc}
+      if(g.cob!=null){c.total+=g.con;c.vis++;c.prop+=g.prop;c.desc+=g.desc}
       if(g.ns){c.ns++;if(!g.nsc){c.nDeuda++;c.deuda+=g.esp}}
     });
     S.cli=cm;
@@ -310,8 +315,8 @@ function rango(){
   if(S.per==="mes")return [d.slice(0,7)+"-01",d.slice(0,7)+"-31"];
   return [d,d];
 }
-const suma=(a,b)=>S.cobros.filter(c=>c.fecha>=a&&c.fecha<=b).reduce((x,c)=>x+c.cob,0);
-const suma0=(a,b)=>S.cobros.filter(c=>c.fecha>=a&&c.fecha<=b).reduce((x,c)=>x+c.cob-c.prop,0);
+const suma=(a,b)=>S.cobros.filter(c=>c.fecha>=a&&c.fecha<=b).reduce((x,c)=>x+c.con,0);
+const suma0=(a,b)=>S.cobros.filter(c=>c.fecha>=a&&c.fecha<=b).reduce((x,c)=>x+c.sin,0);
 function anim(el,to,from){
   const t0=performance.now();
   (function f(t){const p=Math.min((t-t0)/500,1),e=1-Math.pow(1-p,3);el.textContent=fmt(from+(to-from)*e);if(p<1)requestAnimationFrame(f)})(t0);
@@ -330,7 +335,7 @@ function pintaCaja(){
   const it=S.cobros.filter(c=>c.fecha>=a&&c.fecha<=b).sort((x,y)=>y.fecha<x.fecha?-1:y.fecha>x.fecha?1:y.id-x.id);
   const p=it.reduce((x,c)=>x+c.prop,0),ds=it.reduce((x,c)=>x+c.desc,0);
   $("#perSum").textContent=it.length?`${it.length} cobros · propinas ${fmt(p)} · descuentos ${fmt(ds)}`:"";
-  $("#lista").innerHTML=it.length?it.map(c=>`<div class="row" onclick="ficha('${esc(c.key).replace(/'/g,"\\'")}')"><div><b>${esc(c.nombre||"Sin nombre")}</b><small>${esc(c.serv||"")}${S.per!=="dia"?" · "+bonita(c.fecha):""}</small></div><div class="amt">${fmt(c.cob)}<small>${c.prop?`<span class="tag">+${fmt(c.prop)}</span>`:""}${c.desc?`<span class="tag">−${fmt(c.desc)}</span>`:""}</small></div></div>`).join(""):'<div class="empty">Todavía no hay cobros en este periodo</div>';
+  $("#lista").innerHTML=it.length?it.map(c=>`<div class="row" onclick="ficha('${esc(c.key).replace(/'/g,"\\'")}')"><div><b>${esc(c.nombre||"Sin nombre")}</b><small>${esc(c.serv||"")}${S.per!=="dia"?" · "+bonita(c.fecha):""}</small></div><div class="amt">${fmt(c.con)}<small>${c.prop?`<span class="tag">+${fmt(c.prop)}</span>`:""}${c.desc?`<span class="tag">−${fmt(c.desc)}</span>`:""}</small></div></div>`).join(""):'<div class="empty">Todavía no hay cobros en este periodo</div>';
 }
 function moverDia(n){const d=addDays(S.dia,n);if(d>hoy())return;S.dia=d;pintaCaja()}
 $("#perSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;S.per=b.dataset.p;$$("#perSeg button").forEach(x=>x.classList.toggle("on",x===b));pintaCaja()};
@@ -352,7 +357,7 @@ function pintaCli(){
 }
 function ficha(k){
   const c=S.cli.get(k);if(!c){toast("Este cobro no tiene ficha");return}
-  const it=c.items.map(g=>`<div class="row" style="cursor:default"><div><b>${bonita(g.fecha)}</b><small>${esc(g.serv||"")}${g.ns?`<span class="tag ${g.nsc?"":"debt"}">No vino${g.nsc?" · pagado":""}</span>`:""}</small></div><div class="amt">${g.cob!=null?fmt(g.cob):"—"}<small>${g.prop?`<span class="tag">+${fmt(g.prop)}</span>`:""}${g.desc?`<span class="tag">−${fmt(g.desc)}</span>`:""}</small></div></div>`).join("");
+  const it=c.items.map(g=>`<div class="row" style="cursor:default"><div><b>${bonita(g.fecha)}</b><small>${esc(g.serv||"")}${g.ns?`<span class="tag ${g.nsc?"":"debt"}">No vino${g.nsc?" · pagado":""}</span>`:""}</small></div><div class="amt">${g.cob!=null?fmt(g.con):"—"}<small>${g.prop?`<span class="tag">+${fmt(g.prop)}</span>`:""}${g.desc?`<span class="tag">−${fmt(g.desc)}</span>`:""}</small></div></div>`).join("");
   abrir(`<div class="sh"><h3>${esc(c.nombre||"Cliente")}</h3><button class="ico" onclick="cerrar()">&#10005;</button></div>
   <div class="sum" style="margin-bottom:12px">${esc(c.tel||"Sin teléfono")}</div>
   ${c.nDeuda?`<div class="alert">Debe ${c.nDeuda} turno${c.nDeuda>1?"s":""} por no asistir: ${fmt(c.deuda)}</div>`:""}
@@ -383,7 +388,8 @@ function abrirIngreso(){
     <div id="fExtra" hidden><input id="iCon" placeholder="Concepto (ej. venta de producto)" maxlength="60"></div>
     <label class="l">Fecha</label><input id="iFec" type="date" value="${hoy()}" max="${hoy()}">
     <label class="l">Precio esperado</label><input id="iEsp" type="number" inputmode="decimal" placeholder="0" oninput="difer()">
-    <label class="l">Cobrado</label><input id="iCob" type="number" inputmode="decimal" placeholder="0" oninput="F.dirty=true;difer()">
+    <label class="l">Cobrado (sin propina)</label><input id="iCob" type="number" inputmode="decimal" placeholder="0" oninput="F.dirty=true;difer()">
+    <label class="l">Propina (opcional)</label><input id="iPro" type="number" inputmode="decimal" placeholder="0" oninput="difer()">
     <div class="dif" id="iDif"></div>
     <button class="btn" style="margin:0" id="iOk" onclick="guardar()">Guardar</button>`);
     $("#fSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;F.tipo=b.dataset.t;$$("#fSeg button").forEach(x=>x.classList.toggle("on",x===b));$("#fCorte").hidden=F.tipo!=="corte";$("#fExtra").hidden=F.tipo!=="extra"};
@@ -395,14 +401,15 @@ function abrirIngreso(){
 }
 function autoTel(){const n=$("#iNom").value.trim().toLowerCase();const c=[...S.cli.values()].find(c=>(c.nombre||"").toLowerCase()===n);if(c&&c.tel&&!$("#iTel").value)$("#iTel").value=c.tel}
 function difer(){
-  const e=num($("#iEsp").value),c=num($("#iCob").value);
-  $("#iDif").textContent=!c?"":(e&&c>e)?"Propina: "+fmt(c-e):(e&&c<e)?"Descuento: "+fmt(e-c):"Sin propina ni descuento";
+  const e=num($("#iEsp").value),c=num($("#iCob").value),p=num($("#iPro").value);
+  $("#iDif").textContent=!c?"":(e&&c<e?"Descuento: "+fmt(e-c)+" · ":"")+"Total con propina: "+fmt(c+p);
 }
 async function guardar(){
   const cob=num($("#iCob").value);let esp=num($("#iEsp").value);const fec=$("#iFec").value;
   if(!(cob>0))return toast("Escribe cuánto cobraste");
   if(!fec)return toast("Elige la fecha");
   if(!esp)esp=cob;
+  const pro=Math.max(num($("#iPro").value),0);
   let nombre,tel=null,serv;
   if(F.tipo==="corte"){
     nombre=$("#iNom").value.trim();tel=$("#iTel").value.trim()||null;
@@ -413,7 +420,7 @@ async function guardar(){
     nombre="Ingreso extra";serv="Extra: "+($("#iCon").value.trim()||"ingreso");
   }
   const row={fecha:fec,turno:"Extra "+hms(),estado:"ocupado",nombre,telefono:tel,reserva_id:crypto.randomUUID(),notificado:true,
-    servicios:serv,total:Math.round(esp),precio_esperado:esp,precio_cobrado:cob,propina:Math.max(cob-esp,0),descuento:Math.max(esp-cob,0),no_show:false,cancelado:false};
+    servicios:serv,total:Math.round(esp),precio_esperado:esp,precio_cobrado:cob,propina:pro,descuento:Math.max(esp-cob,0),no_show:false,cancelado:false};
   const b=$("#iOk");b.disabled=true;b.textContent="Guardando...";
   const {error}=await sb.from("turnos").insert(row);
   b.disabled=false;b.textContent="Guardar";
