@@ -313,10 +313,14 @@ function construir(rows){
   res.forEach(g=>{
     g.key=keyCli(g.tel,g.nombre);
     if(g.cob!=null){
-      g.con=g.cob;                       // con propina = precio_cobrado (ya la incluye)
-      g.sin=Math.max(g.cob-g.prop,0);    // sin propina = precio_cobrado - columna propina
-      // aviso si los números no cuadran: cobrado debería ser esperado - descuento + propina
-      g.chk=g.esp>0&&Math.abs(g.cob-(g.esp-g.desc+g.prop))>0.5;
+      // precio del servicio ya con descuento
+      const base=g.esp>0?Math.max(g.esp-g.desc,0):null;
+      // propina que ya viene dentro de lo cobrado (cobrado por encima del precio)
+      const incl=base==null?g.prop:Math.max(g.cob-base,0);
+      g.prop=Math.max(g.prop,incl);
+      // si la propina NO venía dentro de lo cobrado, se suma; si ya venía, no se cuenta dos veces
+      g.con=base==null?g.cob:g.cob+Math.max(g.prop-incl,0);
+      g.sin=Math.max(g.con-g.prop,0);
     }
   });
   return res;
