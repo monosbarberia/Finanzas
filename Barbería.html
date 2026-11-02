@@ -56,6 +56,7 @@ button{font-family:inherit;color:var(--o);cursor:pointer}
 .btn.sm{font-size:1.08em;padding:13px;margin:0}
 .btn:disabled{opacity:.45}
 .btn.ghost{background:transparent;color:var(--o);border:1.5px solid var(--o);box-shadow:none}
+.btn.danger{background:transparent;color:var(--bad);border:1.5px solid var(--bad);box-shadow:none}
 .seg{display:flex;gap:6px;margin-bottom:14px}
 .seg button{flex:1;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:8px;padding:11px 4px;font-size:1em;font-weight:600}
 .seg button.on{background:linear-gradient(180deg,var(--oh),var(--o));color:var(--g);border-color:var(--o);box-shadow:0 3px 12px rgba(212,188,114,.25)}
@@ -143,7 +144,9 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 5p
 @keyframes spring{0%{transform:translateY(var(--sy)) scale(var(--ss))}40%{transform:translateY(-1.5px) scale(var(--so))}68%{transform:translateY(.5px) scale(.997)}100%{transform:none}}
 .btn.down{box-shadow:0 1px 0 #9a8540,0 3px 6px rgba(0,0,0,.35)}
 .btn.tap{animation-name:btnTap}.btn.spring{animation-name:btnSpring}
-.btn.ghost.down{box-shadow:none}.btn.ghost.tap{animation-name:tap}.btn.ghost.spring{animation-name:spring}
+.btn.ghost.down,.btn.danger.down{box-shadow:none}
+.btn.ghost.tap,.btn.danger.tap{animation-name:tap}
+.btn.ghost.spring,.btn.danger.spring{animation-name:spring}
 @keyframes btnTap{0%{transform:none;box-shadow:0 5px 0 #9a8540,0 12px 28px rgba(0,0,0,.35)}16%{transform:translateY(4px) scale(.975);box-shadow:0 1px 0 #9a8540,0 3px 6px rgba(0,0,0,.35)}48%{transform:translateY(-2px) scale(1.012);box-shadow:0 7px 0 #9a8540,0 14px 24px rgba(0,0,0,.35)}70%{transform:translateY(.5px) scale(.997);box-shadow:0 4.5px 0 #9a8540,0 10px 20px rgba(0,0,0,.35)}100%{transform:none;box-shadow:0 5px 0 #9a8540,0 12px 28px rgba(0,0,0,.35)}}
 @keyframes btnSpring{0%{transform:translateY(4px) scale(.975);box-shadow:0 1px 0 #9a8540,0 3px 6px rgba(0,0,0,.35)}40%{transform:translateY(-2px) scale(1.012);box-shadow:0 7px 0 #9a8540,0 14px 24px rgba(0,0,0,.35)}68%{transform:translateY(.5px) scale(.997);box-shadow:0 4.5px 0 #9a8540,0 10px 20px rgba(0,0,0,.35)}100%{transform:none;box-shadow:0 5px 0 #9a8540,0 12px 28px rgba(0,0,0,.35)}}
 .rip{position:absolute;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;background:radial-gradient(circle,rgba(255,246,214,.5),rgba(255,246,214,0) 70%);transform:scale(0);pointer-events:none;animation:rip .66s cubic-bezier(.2,.7,.3,1) forwards}
@@ -188,7 +191,6 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 5p
       <div class="subs" id="hSub"></div>
     </div>
 
-    <!-- Tres recuadros: Semana | Mes CUP | Mes USD -->
     <div class="grid3">
       <div class="card">
         <button class="cp" onclick="copiar(S.vw,this)" aria-label="Copiar semana">&#10064;</button>
@@ -357,13 +359,12 @@ async function recargar(manual){
   const rf=$("#rfi");rf.classList.remove("spin");void rf.offsetWidth;rf.classList.add("spin");
   try{
     const res=construir(await traerTodo());
-    // Separar CUP y USD
     S.cobros=res.filter(g=>g.cob!=null && !esUsd(g));
     S.usd=res.filter(g=>g.cob!=null && esUsd(g));
 
     const cm=new Map();
     res.sort((a,b)=>b.fecha<a.fecha?-1:b.fecha>a.fecha?1:0).forEach(g=>{
-      if(esUsd(g))return; // los USD no van a la ficha de clientes CUP
+      if(esUsd(g))return;
       if(g.nombre==="Ingreso extra"&&!g.tel)return;
       let c=cm.get(g.key);
       if(!c){c=cm.set(g.key,{key:g.key,nombre:g.nombre,tel:g.tel,items:[],total:0,vis:0,prop:0,desc:0,ns:0,deuda:0,nDeuda:0}).get(g.key)}
@@ -468,6 +469,7 @@ async function guardarUsd(){
   cerrar();toast("Guardado en USD");S.dia=fec;await recargar();
 }
 
+/* ---------- CLIENTES ---------- */
 $("#cliSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;S.filtro=b.dataset.f;$$("#cliSeg button").forEach(x=>x.classList.toggle("on",x===b));pintaCli()};
 function pintaCli(){
   const q=($("#cBus").value||"").toLowerCase().trim();
@@ -481,12 +483,60 @@ function pintaCli(){
 }
 function ficha(k){
   const c=S.cli.get(k);if(!c){toast("Este cobro no tiene ficha");return}
+  S.ekey=k;
   const it=c.items.map(g=>`<div class="row" ${g.cob!=null?`data-k="${esc(g.k)}"`:'style="cursor:default"'}><div><b>${bonita(g.fecha)}</b><small>${esc(g.serv||"")}${g.ns?`<span class="tag ${g.nsc?"":"debt"}">No vino${g.nsc?" · pagado":""}</span>`:""}</small></div><div class="amt">${g.cob!=null?fmt(g.con):"—"}<small>${g.prop?`<span class="tag">+${fmt(g.prop)}</span>`:""}${g.desc?`<span class="tag">−${fmt(g.desc)}</span>`:""}</small></div></div>`).join("");
   abrir(`<div class="sh"><h3>${esc(c.nombre||"Cliente")}</h3><button class="ico" onclick="cerrar()">&#10005;</button></div>
   <div class="sum" style="margin-bottom:12px">${esc(c.tel||"Sin teléfono")}</div>
   ${c.nDeuda?`<div class="alert">Debe ${c.nDeuda} turno${c.nDeuda>1?"s":""} por no asistir: ${fmt(c.deuda)}</div>`:""}
   <div class="stats"><div><b>${fmt(c.total)}</b><small>Ingresado</small></div><div><b>${c.vis}</b><small>Visitas</small></div><div><b>${c.vis?fmt(c.total/c.vis):"$0"}</b><small>Promedio</small></div>
-  <div><b>${fmt(c.prop)}</b><small>Propinas</small></div><div><b>${fmt(c.desc)}</b><small>Descuentos</small></div><div><b>${c.ns}</b><small>No vino</small></div></div>${it}`);
+  <div><b>${fmt(c.prop)}</b><small>Propinas</small></div><div><b>${fmt(c.desc)}</b><small>Descuentos</small></div><div><b>${c.ns}</b><small>No vino</small></div></div>
+  <div class="grid2" style="margin-bottom:16px">
+    <button class="btn sm ghost" onclick="editarCliente('${esc(k).replace(/'/g,"\\'")}')">Editar cliente</button>
+    <button class="btn sm danger" onclick="borrarCliente('${esc(k).replace(/'/g,"\\'")}')">Eliminar cliente</button>
+  </div>
+  ${it}`);
+}
+function editarCliente(k){
+  const c=S.cli.get(k);if(!c)return toast("Cliente no encontrado");
+  S.ekey=k;
+  abrir(`<div class="sh"><h3>Editar cliente</h3><button class="ico" onclick="cerrar()">&#10005;</button></div>
+  <label class="l">Nombre</label>
+  <input id="cNom" value="${esc(c.nombre||"")}" placeholder="Nombre del cliente" maxlength="60">
+  <label class="l">Teléfono</label>
+  <input id="cTel" type="tel" inputmode="numeric" maxlength="8" value="${esc(c.tel||"")}" placeholder="8 dígitos (opcional)">
+  <button class="btn" style="margin:0" id="cOk" onclick="guardarCliente()">Guardar cambios</button>
+  <button class="btn ghost sm" style="margin-top:14px" onclick="ficha(S.ekey)">Volver a la ficha</button>`);
+}
+async function guardarCliente(){
+  const c=S.cli.get(S.ekey);if(!c)return;
+  const nombre=$("#cNom").value.trim();
+  const tel=$("#cTel").value.trim()||null;
+  if(!nombre)return toast("Escribe el nombre");
+  if(tel&&!/^[0-9]{8}$/.test(tel))return toast("El teléfono debe tener 8 dígitos");
+
+  // Recoger todos los ids de los turnos de este cliente
+  const ids=c.items.map(g=>g.id).filter(Boolean);
+  if(!ids.length)return toast("No hay registros que actualizar");
+
+  const b=$("#cOk");b.disabled=true;b.textContent="Guardando...";
+  const {error}=await sb.from("turnos").update({nombre,telefono:tel}).in("id",ids);
+  b.disabled=false;b.textContent="Guardar cambios";
+  if(error)return toast("No se pudo guardar");
+  cerrar();toast("Cliente actualizado");
+  await recargar();
+}
+async function borrarCliente(k){
+  const c=S.cli.get(k);if(!c)return toast("Cliente no encontrado");
+  const n=c.items.length;
+  if(!confirm(`¿Eliminar a "${c.nombre||"este cliente"}" y sus ${n} registro${n!==1?"s":""}?\n\nEsto borra todos sus cobros e historial. No se puede deshacer.`))return;
+
+  const ids=c.items.map(g=>g.id).filter(Boolean);
+  if(!ids.length)return toast("No hay registros que borrar");
+
+  const {error}=await sb.from("turnos").delete().in("id",ids);
+  if(error)return toast("No se pudo eliminar");
+  cerrar();toast("Cliente eliminado");
+  await recargar();
 }
 
 async function precios(){
