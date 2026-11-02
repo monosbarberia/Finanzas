@@ -36,7 +36,6 @@ body{
 }
 .wrap{max-width:550px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 16px) 16px 0}
 
-/* Top bar */
 .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
 .logo{height:48px;width:auto;display:block;filter:drop-shadow(0 6px 12px rgba(0,0,0,.5))}
 .login .logo{height:128px;margin:0 auto 16px;filter:drop-shadow(0 12px 24px rgba(0,0,0,.45))}
@@ -55,7 +54,6 @@ button{font-family:inherit;color:var(--o);cursor:pointer}
 .spin{animation:sp .7s linear}
 @keyframes sp{to{transform:rotate(360deg)}}
 
-/* Cards & boxes */
 .box{
   background:linear-gradient(165deg, rgba(255,255,255,.04) 0%, rgba(0,0,0,.15) 100%);
   border:1px solid var(--line2);
@@ -94,7 +92,6 @@ button{font-family:inherit;color:var(--o);cursor:pointer}
 }
 .pill.ok{background:var(--o);color:var(--g);box-shadow:0 4px 16px rgba(212,188,114,.35)}
 
-/* Grid cards */
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
 .card{
   background:linear-gradient(160deg, rgba(0,0,0,.22) 0%, rgba(0,0,0,.12) 100%);
@@ -111,7 +108,6 @@ button{font-family:inherit;color:var(--o);cursor:pointer}
 }
 .card .cp:active{opacity:1}
 
-/* Buttons */
 .btn{
   background:linear-gradient(180deg, var(--oh) 0%, var(--o) 100%);
   color:var(--g);border:0;border-radius:10px;
@@ -129,7 +125,6 @@ button{font-family:inherit;color:var(--o);cursor:pointer}
 }
 .btn.ghost:active{background:rgba(212,188,114,.1)}
 
-/* Segments */
 .seg{display:flex;gap:6px;margin-bottom:14px}
 .seg button{
   flex:1;background:rgba(0,0,0,.25);border:1px solid var(--line);
@@ -143,7 +138,6 @@ button{font-family:inherit;color:var(--o);cursor:pointer}
 }
 .sum{font-style:italic;opacity:.8;font-size:.95em;margin:2px 2px 12px}
 
-/* Rows */
 .row{
   display:flex;justify-content:space-between;gap:12px;align-items:center;
   padding:14px 6px;border-bottom:1px solid var(--line2);
@@ -163,7 +157,6 @@ button{font-family:inherit;color:var(--o);cursor:pointer}
 .debt{color:var(--bad);border-color:var(--bad)}
 .empty{text-align:center;opacity:.55;font-style:italic;padding:28px 0;font-size:1.05em}
 
-/* Forms */
 input,select{
   width:100%;background:rgba(0,0,0,.28);color:var(--o);
   border:1px solid rgba(212,188,114,.4);border-radius:9px;
@@ -177,7 +170,6 @@ input[type=date]{min-height:54px}
 input[type=date]::-webkit-calendar-picker-indicator{filter:invert(75%) sepia(40%) saturate(400%) hue-rotate(5deg)}
 label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 5px 3px}
 
-/* Chips */
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
 .chip{
   background:rgba(0,0,0,.22);border:1px solid var(--line);
@@ -190,7 +182,6 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 5p
   box-shadow:0 3px 10px rgba(212,188,114,.3);
 }
 
-/* Slots */
 .slots{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 16px}
 .slot{
   padding:15px 4px;text-align:center;line-height:1.15;
@@ -204,7 +195,6 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 5p
 .slot:not(.booked):not(.blk):active{background:rgba(212,188,114,.12)}
 .dif{min-height:26px;text-align:center;font-style:italic;margin-bottom:10px;opacity:.9}
 
-/* Tabs */
 .tabs{
   position:fixed;left:0;right:0;bottom:0;display:flex;
   background:rgba(18,38,24,.94);border-top:1px solid var(--line);
@@ -226,12 +216,10 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 5p
   width:18px;height:3px;border-radius:2px;background:var(--o);
 }
 
-/* Views */
 .view{display:none}
 .view.on{display:block;animation:in .28s cubic-bezier(.2,.8,.3,1)}
 @keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
-/* Overlay & sheet */
 .ov{
   position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100;
   display:none;align-items:flex-end;justify-content:center;
@@ -252,7 +240,6 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 5p
 .sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .sh h3{margin:0;font-size:1.45em;text-transform:uppercase;letter-spacing:1.5px;font-weight:700}
 
-/* Stats */
 .stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
 .stats div{
   background:rgba(0,0,0,.25);border:1px solid var(--line);
@@ -265,7 +252,6 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 5p
   padding:13px;margin-bottom:14px;text-align:center;background:rgba(233,167,157,.08);
 }
 
-/* Toast */
 .toast{
   position:fixed;left:50%;bottom:calc(108px + env(safe-area-inset-bottom));
   transform:translate(-50%,16px);background:var(--o);color:var(--g);
@@ -275,7 +261,6 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 5p
 }
 .toast.on{opacity:1;transform:translate(-50%,0)}
 
-/* Login */
 .login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
 .login .box{
   width:100%;max-width:420px;
@@ -298,7 +283,6 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 5p
 .err{color:var(--bad);text-align:center;min-height:22px;margin-bottom:8px}
 [hidden]{display:none!important}
 
-/* Sub cifras */
 .subs{display:flex;flex-wrap:wrap;gap:2px 16px;margin-top:6px;font-style:italic;font-size:.9em}
 .hero .subs{justify-content:center;margin-top:18px}
 .subs b{font-style:normal;font-weight:600;font-size:1em;color:#f5ecd8}
@@ -307,7 +291,6 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 5p
 .subs .pr,.subs .pr b{color:var(--o)}
 .subs .pr::before{background:var(--o);border-color:var(--o)}
 
-/* Inventario */
 .inv{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line2)}
 .inv:last-child{border:0}
 .inf{flex:1;min-width:0;background:none;border:0;text-align:left;padding:6px 4px;border-radius:8px;font-size:1em}
@@ -330,7 +313,6 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 5p
   font-size:.72em;line-height:18px;text-align:center;
 }
 
-/* Press / ripple animations */
 .press{position:relative;overflow:hidden;--sy:4px;--ss:.955;--so:1.018;transition:transform .16s cubic-bezier(.3,.7,.4,1),box-shadow .16s,filter .16s,background .2s,opacity .2s,color .15s,border-color .15s}
 .row,.card,.inf{--sy:2px;--ss:.975;--so:1.006}
 .btn{--ss:.975;--so:1.012}
@@ -458,7 +440,12 @@ const bonita=d=>{const [y,m,dd]=d.split("-");return `${+dd}/${+m}`};
 const later=fn=>setTimeout(fn,40);
 const keyCli=(t,n)=>(t||"")+"|"+(n||"").toLowerCase().trim();
 
-let sb,S={dia:hoy(),per:"dia",vis:0,vd:0,vw:0,vm:0,vd0:0,vw0:0,vm0:0,cobros:[],cli:new Map(),precios:[],bdia:hoy(),ek:null,ekey:null};
+let sb,S={
+  dia:hoy(),per:"dia",filtro:"todos",
+  vis:0,vd:0,vw:0,vm:0,vd0:0,vw0:0,vm0:0,
+  cobros:[],cli:new Map(),precios:[],
+  bdia:hoy(),ek:null,ekey:null
+};
 const toast=m=>{const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("on"),2200)};
 function abrir(html){$("#sheet").innerHTML=html;$("#ov").classList.add("on")}
 function cerrar(){$("#ov").classList.remove("on")}
@@ -473,13 +460,12 @@ async function init(){
 function mostrarLogin(){$("#loginV").hidden=false;$("#app").hidden=true}
 function mostrarApp(){$("#loginV").hidden=true;$("#app").hidden=false;S.dia=hoy();S.bdia=hoy();$("#bFec").value=S.bdia}
 async function login(){
-  const em=$("#lEm").value.trim(),pw=$("#lPw").value,rem=$("#lRem").checked;
+  const em=$("#lEm").value.trim(),pw=$("#lPw").value;
   if(!em||!pw)return $("#lErr").textContent="Escribe correo y contraseña";
   $("#lBtn").disabled=true;$("#lBtn").textContent="Entrando...";$("#lErr").textContent="";
   const {error}=await sb.auth.signInWithPassword({email:em,password:pw});
   $("#lBtn").disabled=false;$("#lBtn").textContent="Entrar";
   if(error){$("#lErr").textContent="Correo o contraseña incorrectos";return}
-  if(!rem){/* session persists by default */}
   mostrarApp();await recargar();
 }
 function salir(){sb.auth.signOut();mostrarLogin()}
@@ -522,7 +508,8 @@ async function recargar(manual){
     S.cobros=res.filter(g=>g.cob!=null);
     const cm=new Map();
     res.sort((a,b)=>b.fecha<a.fecha?-1:b.fecha>a.fecha?1:0).forEach(g=>{
-      if(g.nombre==="Ingreso extra")return;
+      // Solo saltamos los ingresos extra genéricos (sin nombre real)
+      if(g.nombre==="Ingreso extra" && !g.tel)return;
       let c=cm.get(g.key);
       if(!c){c=cm.set(g.key,{key:g.key,nombre:g.nombre,tel:g.tel,items:[],total:0,vis:0,prop:0,desc:0,ns:0,deuda:0,nDeuda:0}).get(g.key)}
       c.items.push(g);
@@ -531,9 +518,9 @@ async function recargar(manual){
     });
     S.cli=cm;
     pintaCaja();pintaCli();
-    try{await cargarInv()}catch(e){}
+    try{await cargarInv()}catch(e){console.error(e);toast("Error al cargar inventario")}
     if(manual)toast("Actualizado");
-  }catch(e){toast("No se pudo cargar. Revisa la conexión")}
+  }catch(e){console.error(e);toast("No se pudo cargar. Revisa la conexión")}
 }
 
 /* ---------- CAJA ---------- */
@@ -577,10 +564,20 @@ async function copiar(n,btn){
 }
 
 /* ---------- CLIENTES ---------- */
-$("#cliSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;S.filtro=b.dataset.f;$$("#cliSeg button").forEach(x=>x.classList.toggle("on",x===b));pintaCli()};
+$("#cliSeg").onclick=e=>{
+  const b=e.target.closest("button");if(!b)return;
+  S.filtro=b.dataset.f;
+  $$("#cliSeg button").forEach(x=>x.classList.toggle("on",x===b));
+  pintaCli();
+};
 function pintaCli(){
   const q=($("#cBus").value||"").toLowerCase().trim();
-  let l=[...S.cli.values()].filter(c=>(S.filtro==="todos"||c.nDeuda>0)&&(!q||(c.nombre||"").toLowerCase().includes(q)||(c.tel||"").includes(q)));
+  // Corregido: por defecto muestra todos (S.filtro === "todos")
+  let l=[...S.cli.values()].filter(c=>{
+    const matchFiltro = S.filtro !== "deben" || c.nDeuda > 0;
+    const matchBusqueda = !q || (c.nombre||"").toLowerCase().includes(q) || (c.tel||"").includes(q);
+    return matchFiltro && matchBusqueda;
+  });
   l.sort((a,b)=>b.nDeuda-a.nDeuda||b.total-a.total);
   $("#cliLista").innerHTML=l.length?l.map(c=>`<div class="row" onclick="ficha('${esc(c.key).replace(/'/g,"\\'")}')"><div><b>${esc(c.nombre||"Sin nombre")}</b><small>${c.vis} visitas${c.vis?" · prom. "+fmt(c.total/c.vis):""}${c.nDeuda?`<span class="tag debt">Debe ${c.nDeuda} turno${c.nDeuda>1?"s":""} · ${fmt(c.deuda)}</span>`:""}</small></div><div class="amt">${fmt(c.total)}</div></div>`).join(""):'<div class="empty">No hay clientes que mostrar</div>';
 }
@@ -671,50 +668,73 @@ async function guardar(){
 /* ---------- BLOQUEOS ---------- */
 async function cargarBloq(){
   const f=S.bdia||hoy();
-  const {data}=await sb.from("bloqueos").select("id,fecha,hora,todo_el_dia").eq("fecha",f);
-  const set=new Set((data||[]).map(b=>b.todo_el_dia?"ALL":b.hora));
-  const all=set.has("ALL");
-  $("#slots").innerHTML=SLOTS.map(h=>{
-    const booked=all||set.has(h);
-    return `<button type="button" class="slot ${booked?"booked blk":""}" data-h="${h}" ${booked?"":'onclick="toggleSlot(this)"'}>${h}${booked?"<small>bloqueado</small>":""}</button>`;
-  }).join("");
-  $("#bMsg").innerHTML=all?'<div class="alert" style="margin:0 0 12px">Día completo bloqueado</div>':"";
-  const {data:prox}=await sb.from("bloqueos").select("fecha,hora,todo_el_dia").gte("fecha",hoy()).order("fecha").limit(20);
-  const agrup={};
-  (prox||[]).forEach(b=>{
-    if(!agrup[b.fecha])agrup[b.fecha]=[];
-    agrup[b.fecha].push(b.todo_el_dia?"Todo el día":b.hora);
-  });
-  $("#bProx").innerHTML=Object.keys(agrup).length?Object.entries(agrup).map(([f,hs])=>`<div class="row" style="cursor:default"><div><b>${bonita(f)}</b><small>${hs.join(" · ")}</small></div></div>`).join(""):'<div class="empty">No hay bloqueos próximos</div>';
+  try{
+    const {data,error}=await sb.from("bloqueos").select("id,fecha,hora,todo_el_dia").eq("fecha",f);
+    if(error)throw error;
+    const set=new Set((data||[]).map(b=>b.todo_el_dia?"ALL":b.hora));
+    const all=set.has("ALL");
+    $("#slots").innerHTML=SLOTS.map(h=>{
+      const booked=all||set.has(h);
+      return `<button type="button" class="slot ${booked?"booked blk":""}" data-h="${h}" ${booked?"":'onclick="toggleSlot(this)"'}>${h}${booked?"<small>bloqueado</small>":""}</button>`;
+    }).join("");
+    $("#bMsg").innerHTML=all?'<div class="alert" style="margin:0 0 12px">Día completo bloqueado</div>':"";
+    const {data:prox}=await sb.from("bloqueos").select("fecha,hora,todo_el_dia").gte("fecha",hoy()).order("fecha").limit(20);
+    const agrup={};
+    (prox||[]).forEach(b=>{
+      if(!agrup[b.fecha])agrup[b.fecha]=[];
+      agrup[b.fecha].push(b.todo_el_dia?"Todo el día":b.hora);
+    });
+    $("#bProx").innerHTML=Object.keys(agrup).length?Object.entries(agrup).map(([f,hs])=>`<div class="row" style="cursor:default"><div><b>${bonita(f)}</b><small>${hs.join(" · ")}</small></div></div>`).join(""):'<div class="empty">No hay bloqueos próximos</div>';
+  }catch(e){
+    console.error(e);
+    toast("Error al cargar bloqueos");
+    $("#slots").innerHTML='<div class="empty">No se pudieron cargar los horarios</div>';
+  }
 }
 function toggleSlot(el){el.classList.toggle("on")}
 async function bloquear(todo){
   const f=S.bdia||hoy();
-  if(todo){
-    const {error}=await sb.from("bloqueos").upsert({fecha:f,hora:null,todo_el_dia:true},{onConflict:"fecha,hora"});
-    if(error)return toast("No se pudo bloquear");
-    toast("Día bloqueado");
-  }else{
-    const sel=$$("#slots .slot.on:not(.booked)");
-    if(!sel.length)return toast("Elige al menos un horario");
-    for(const el of sel){
-      await sb.from("bloqueos").upsert({fecha:f,hora:el.dataset.h,todo_el_dia:false},{onConflict:"fecha,hora"});
+  try{
+    if(todo){
+      const {error}=await sb.from("bloqueos").upsert({fecha:f,hora:null,todo_el_dia:true},{onConflict:"fecha,hora"});
+      if(error)throw error;
+      toast("Día bloqueado");
+    }else{
+      const sel=$$("#slots .slot.on:not(.booked)");
+      if(!sel.length)return toast("Elige al menos un horario");
+      for(const el of sel){
+        const {error}=await sb.from("bloqueos").upsert({fecha:f,hora:el.dataset.h,todo_el_dia:false},{onConflict:"fecha,hora"});
+        if(error)throw error;
+      }
+      toast("Horarios bloqueados");
     }
-    toast("Horarios bloqueados");
+    cargarBloq();
+  }catch(e){
+    console.error(e);
+    toast("No se pudo bloquear");
   }
-  cargarBloq();
 }
 async function liberar(){
   const f=S.bdia||hoy();
-  const {error}=await sb.from("bloqueos").delete().eq("fecha",f);
-  if(error)return toast("No se pudo liberar");
-  toast("Bloqueos liberados");cargarBloq();
+  try{
+    const {error}=await sb.from("bloqueos").delete().eq("fecha",f);
+    if(error)throw error;
+    toast("Bloqueos liberados");
+    cargarBloq();
+  }catch(e){
+    console.error(e);
+    toast("No se pudo liberar");
+  }
 }
 
 /* ---------- INVENTARIO ---------- */
 async function cargarInv(){
   const {data,error}=await sb.from("inventario").select("id,nombre,stock,minimo,unidad").order("nombre");
-  if(error)throw error;
+  if(error){
+    console.error(error);
+    $("#invLista").innerHTML='<div class="empty">Error al cargar inventario</div>';
+    throw error;
+  }
   const items=data||[];
   const bajos=items.filter(i=>i.stock<=(i.minimo??0));
   $("#invBdg").hidden=!bajos.length;$("#invBdg").textContent=bajos.length||"";
@@ -732,7 +752,6 @@ async function chgStk(id,d){
   cargarInv();
 }
 function editInv(id){
-  const item=id?null:null;
   abrir(`<div class="sh"><h3>${id?"Editar producto":"Nuevo producto"}</h3><button class="ico" onclick="cerrar()">&#10005;</button></div>
   <label class="l">Nombre</label><input id="ivNom" placeholder="Ej. Cera mate" value="">
   <label class="l">Stock actual</label><input id="ivStk" type="number" inputmode="numeric" placeholder="0" value="0">
@@ -773,29 +792,40 @@ function editCobro(k){
   const g=S.cobros.find(x=>x.k===k);if(!g)return toast("No se encontró el cobro");
   S.ek=k;S.ekey=g.key;
 
-  // Concepto actual de un ingreso extra (quita el prefijo "Extra: ")
   const conceptoExtra = g.extra && g.serv
     ? (g.serv.startsWith("Extra: ") ? g.serv.slice(7) : g.serv)
     : "";
 
   if(g.extra){
-    // Formulario completo para ingresos extra
+    const dl=[...S.cli.values()].map(c=>`<option value="${esc(c.nombre)}">`).join("");
     abrir(`<div class="sh"><h3>Editar ingreso extra</h3><button class="ico" onclick="cerrar()">&#10005;</button></div>
+
+    <label class="l">Nombre del cliente</label>
+    <input id="eNom" list="dlcE" placeholder="Nombre del cliente" value="${esc(g.nombre==="Ingreso extra"?"":g.nombre||"")}" autocomplete="off" oninput="autoTelEdit()">
+    <datalist id="dlcE">${dl}</datalist>
+
+    <label class="l">Teléfono</label>
+    <input id="eTel" type="tel" inputmode="numeric" maxlength="8" placeholder="Teléfono (8 dígitos)" value="${esc(g.tel||"")}">
+
     <label class="l">Concepto</label>
     <input id="eCon" placeholder="Ej. venta de producto, propina suelta..." value="${esc(conceptoExtra)}" maxlength="60">
+
     <label class="l">Fecha</label>
     <input id="eFec" type="date" value="${g.fecha}" max="${hoy()}">
+
     <label class="l">Precio esperado</label>
     <input id="iEsp" type="number" inputmode="decimal" placeholder="0" value="${g.esp>0?nn(g.esp):""}" oninput="difer()">
+
     <label class="l">Cobrado (total, propina incluida)</label>
     <input id="iCob" type="number" inputmode="decimal" placeholder="0" value="${nn(g.con)}" oninput="difer()">
+
     <label class="l">Propina (si la dejas vacía, se calcula)</label>
     <input id="iPro" type="number" inputmode="decimal" placeholder="auto" value="${g.prop>0?nn(g.prop):""}" oninput="difer()">
+
     <div class="dif" id="iDif"></div>
     <button class="btn" style="margin-bottom:0" id="eOk" onclick="guardarEdit()">Guardar cambios</button>
     <button class="btn ghost sm" style="margin-top:14px" onclick="borrarCobro()">Eliminar ingreso extra</button>`);
   } else {
-    // Formulario normal (solo montos) para cobros de corte
     abrir(`<div class="sh"><h3>Editar cobro</h3><button class="ico" onclick="cerrar()">&#10005;</button></div>
     <div class="sum" style="margin-bottom:12px">${esc(g.nombre||"Sin nombre")} · ${bonita(g.fecha)}${g.serv?" · "+esc(g.serv):""}</div>
     <label class="l">Precio esperado</label><input id="iEsp" type="number" inputmode="decimal" placeholder="0" value="${g.esp>0?nn(g.esp):""}" oninput="difer()">
@@ -808,6 +838,13 @@ function editCobro(k){
   difer();
 }
 
+function autoTelEdit(){
+  const n=$("#eNom")?.value.trim().toLowerCase();
+  if(!n)return;
+  const c=[...S.cli.values()].find(c=>(c.nombre||"").toLowerCase()===n);
+  if(c&&c.tel&&$("#eTel")&&!$("#eTel").value)$("#eTel").value=c.tel;
+}
+
 async function guardarEdit(){
   const g=S.cobros.find(x=>x.k===S.ek);if(!g)return;
   const cob=num($("#iCob").value);
@@ -818,14 +855,19 @@ async function guardarEdit(){
 
   const patch={precio_esperado:esp,precio_cobrado:cob,propina:pro,descuento:desc};
 
-  // Si es ingreso extra, también actualizamos concepto y fecha
   if(g.extra){
+    const nombre=($("#eNom")?.value||"").trim();
+    const tel=($("#eTel")?.value||"").trim()||null;
     const con=($("#eCon")?.value||"").trim();
     const fec=$("#eFec")?.value;
+
     if(!fec)return toast("Elige la fecha");
-    patch.servicios="Extra: "+(con||"ingreso");
-    patch.fecha=fec;
-    // nombre se mantiene como "Ingreso extra"
+    if(tel&&!/^[0-9]{8}$/.test(tel))return toast("El teléfono debe tener 8 dígitos");
+
+    patch.nombre = nombre || "Ingreso extra";
+    patch.telefono = tel;
+    patch.servicios = "Extra: "+(con||"ingreso");
+    patch.fecha = fec;
   }
 
   const b=$("#eOk");b.disabled=true;b.textContent="Guardando...";
