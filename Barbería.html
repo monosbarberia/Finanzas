@@ -302,11 +302,12 @@ function construir(rows){
   const m=new Map();
   rows.forEach(r=>{
     const k=r.reserva_id||("id"+r.id);let g=m.get(k);
-    if(!g){g={k,id:r.id,fecha:r.fecha,nombre:r.nombre,tel:r.telefono,serv:r.servicios,esp:0,cob:null,prop:0,desc:0,ns:false,nsc:false};m.set(k,g)}
+    if(!g){g={k,id:r.id,fecha:r.fecha,nombre:r.nombre,tel:r.telefono,serv:r.servicios,esp:0,cob:null,prop:0,desc:0,ns:false,nsc:false,rid:r.reserva_id,extra:false};m.set(k,g)}
     if(r.precio_cobrado!=null)g.cob=Math.max(g.cob??0,+r.precio_cobrado);
     g.esp=Math.max(g.esp,+(r.precio_esperado??r.total??0));
     g.prop=Math.max(g.prop,+(r.propina||0));g.desc=Math.max(g.desc,+(r.descuento||0));
     if(r.no_show)g.ns=true;if(r.no_show_cobrado)g.nsc=true;
+    if(/^Extra /.test(r.turno||""))g.extra=true;
     if(r.fecha<g.fecha)g.fecha=r.fecha;
   });
   const res=[...m.values()];
@@ -374,8 +375,8 @@ function pintaCaja(){
   const [a,b]=rango();
   const it=S.cobros.filter(c=>c.fecha>=a&&c.fecha<=b).sort((x,y)=>y.fecha<x.fecha?-1:y.fecha>x.fecha?1:y.id-x.id);
   const p=it.reduce((x,c)=>x+c.prop,0),ds=it.reduce((x,c)=>x+c.desc,0);
-  $("#perSum").textContent=it.length?`${it.length} cobros · propinas ${fmt(p)} · descuentos ${fmt(ds)}`:"";
-  $("#lista").innerHTML=it.length?it.map(c=>`<div class="row" onclick="ficha('${esc(c.key).replace(/'/g,"\\'")}')"><div><b>${esc(c.nombre||"Sin nombre")}</b><small>${esc(c.serv||"")}${S.per!=="dia"?" · "+bonita(c.fecha):""}</small></div><div class="amt">${fmt(c.con)}<small>${c.chk?`<span class="tag debt">revisar</span>`:""}${c.prop?`<span class="tag">+${fmt(c.prop)}</span>`:""}${c.desc?`<span class="tag">−${fmt(c.desc)}</span>`:""}</small></div></div>`).join(""):'<div class="empty">Todavía no hay cobros en este periodo</div>';
+  $("#perSum").textContent=it.length?`${it.length} cobros · propinas ${fmt(p)} · descuentos ${fmt(ds)} · toca uno para editarlo`:"";
+  $("#lista").innerHTML=it.length?it.map(c=>`<div class="row" data-k="${esc(c.k)}"><div><b>${esc(c.nombre||"Sin nombre")}</b><small>${esc(c.serv||"")}${S.per!=="dia"?" · "+bonita(c.fecha):""}</small></div><div class="amt">${fmt(c.con)}<small>${c.chk?`<span class="tag debt">revisar</span>`:""}${c.prop?`<span class="tag">+${fmt(c.prop)}</span>`:""}${c.desc?`<span class="tag">−${fmt(c.desc)}</span>`:""}</small></div></div>`).join(""):'<div class="empty">Todavía no hay cobros en este periodo</div>';
 }
 function moverDia(n){const d=addDays(S.dia,n);if(d>hoy())return;S.dia=d;pintaCaja()}
 $("#perSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;S.per=b.dataset.p;$$("#perSeg button").forEach(x=>x.classList.toggle("on",x===b));pintaCaja()};
@@ -397,7 +398,7 @@ function pintaCli(){
 }
 function ficha(k){
   const c=S.cli.get(k);if(!c){toast("Este cobro no tiene ficha");return}
-  const it=c.items.map(g=>`<div class="row" style="cursor:default"><div><b>${bonita(g.fecha)}</b><small>${esc(g.serv||"")}${g.ns?`<span class="tag ${g.nsc?"":"debt"}">No vino${g.nsc?" · pagado":""}</span>`:""}</small></div><div class="amt">${g.cob!=null?fmt(g.con):"—"}<small>${g.chk?`<span class="tag debt">revisar</span>`:""}${g.prop?`<span class="tag">+${fmt(g.prop)}</span>`:""}${g.desc?`<span class="tag">−${fmt(g.desc)}</span>`:""}</small></div></div>`).join("");
+  const it=c.items.map(g=>`<div class="row" ${g.cob!=null?`data-k="${esc(g.k)}"`:'style="cursor:default"'}><div><b>${bonita(g.fecha)}</b><small>${esc(g.serv||"")}${g.ns?`<span class="tag ${g.nsc?"":"debt"}">No vino${g.nsc?" · pagado":""}</span>`:""}</small></div><div class="amt">${g.cob!=null?fmt(g.con):"—"}<small>${g.chk?`<span class="tag debt">revisar</span>`:""}${g.prop?`<span class="tag">+${fmt(g.prop)}</span>`:""}${g.desc?`<span class="tag">−${fmt(g.desc)}</span>`:""}</small></div></div>`).join("");
   abrir(`<div class="sh"><h3>${esc(c.nombre||"Cliente")}</h3><button class="ico" onclick="cerrar()">&#10005;</button></div>
   <div class="sum" style="margin-bottom:12px">${esc(c.tel||"Sin teléfono")}</div>
   ${c.nDeuda?`<div class="alert">Debe ${c.nDeuda} turno${c.nDeuda>1?"s":""} por no asistir: ${fmt(c.deuda)}</div>`:""}
@@ -594,6 +595,47 @@ async function borrarInv(id){
   cerrar();toast("Eliminado");
   try{await cargarInv()}catch(e){}
 }
+
+
+/* ---------- EDITAR / ELIMINAR COBRO ---------- */
+function editCobro(k){
+  const g=S.cobros.find(x=>x.k===k);if(!g)return toast("No se encontró el cobro");
+  S.ek=k;S.ekey=g.key;
+  abrir(`<div class="sh"><h3>Editar cobro</h3><button class="ico" onclick="cerrar()">&#10005;</button></div>
+  <div class="sum" style="margin-bottom:12px">${esc(g.nombre||"Sin nombre")} · ${bonita(g.fecha)}${g.serv?" · "+esc(g.serv):""}</div>
+  <label class="l">Precio esperado</label><input id="iEsp" type="number" inputmode="decimal" placeholder="0" value="${g.esp>0?nn(g.esp):""}" oninput="difer()">
+  <label class="l">Cobrado (total, propina incluida)</label><input id="iCob" type="number" inputmode="decimal" placeholder="0" value="${nn(g.con)}" oninput="difer()">
+  <label class="l">Propina (si la dejas vacía, se calcula)</label><input id="iPro" type="number" inputmode="decimal" placeholder="auto" value="${g.prop>0?nn(g.prop):""}" oninput="difer()">
+  <div class="dif" id="iDif"></div>
+  <button class="btn" style="margin-bottom:0" id="eOk" onclick="guardarEdit()">Guardar cambios</button>
+  ${S.cli.has(g.key)?`<button class="btn ghost sm" style="margin-top:14px" onclick="ficha(S.ekey)">Ver ficha del cliente</button>`:""}
+  ${g.extra?`<button class="btn ghost sm" style="margin-top:14px" onclick="borrarCobro()">Eliminar ingreso extra</button>`:""}`);
+  difer();
+}
+async function guardarEdit(){
+  const g=S.cobros.find(x=>x.k===S.ek);if(!g)return;
+  const cob=num($("#iCob").value);
+  if(!(cob>0))return toast("Escribe cuánto cobraste");
+  const esp=num($("#iEsp").value)||cob,raw=$("#iPro").value.trim();
+  const pro=raw!==""?Math.max(num(raw),0):(cob>esp?cob-esp:0);
+  const desc=Math.max(esp-(cob-pro),0);
+  const b=$("#eOk");b.disabled=true;b.textContent="Guardando...";
+  const q=sb.from("turnos").update({precio_esperado:esp,precio_cobrado:cob,propina:pro,descuento:desc});
+  const {data,error}=await (g.rid?q.eq("reserva_id",g.rid).not("precio_cobrado","is",null):q.eq("id",g.id)).select("id");
+  b.disabled=false;b.textContent="Guardar cambios";
+  if(error||!data||!data.length)return toast("No se pudo guardar el cambio");
+  cerrar();toast("Cobro corregido");S.dia=g.fecha<=hoy()?g.fecha:S.dia;await recargar();
+}
+async function borrarCobro(){
+  const g=S.cobros.find(x=>x.k===S.ek);if(!g||!g.extra)return;
+  if(!confirm("¿Eliminar este ingreso extra de "+fmt(g.con)+"? No se puede deshacer."))return;
+  const q=sb.from("turnos").delete().like("turno","Extra%");
+  const {data,error}=await (g.rid?q.eq("reserva_id",g.rid):q.eq("id",g.id)).select("id");
+  if(error||!data||!data.length)return toast("No se pudo eliminar");
+  cerrar();toast("Ingreso eliminado");await recargar();
+}
+$("#lista").onclick=e=>{const r=e.target.closest(".row[data-k]");if(r){const k=r.dataset.k;later(()=>editCobro(k))}};
+$("#sheet").onclick=e=>{const r=e.target.closest(".row[data-k]");if(r){const k=r.dataset.k;later(()=>editCobro(k))}};
 
 /* ---------- Animación de botones ---------- */
 const SEL="button:not(:disabled),.row,.card";
