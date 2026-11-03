@@ -69,8 +69,11 @@ button{font-family:inherit;color:var(--o);cursor:pointer}
 .amt{text-align:right;font-weight:700;color:#fff;font-size:1.18em;white-space:nowrap}
 .amt small{font-weight:400;color:var(--o)}
 .tag{display:inline-block;border:1px solid var(--line);border-radius:12px;padding:1px 9px;font-size:.78em;margin-left:5px}
+.tag.usd{color:#9ec9ff;border-color:rgba(158,201,255,.45)}
 .debt{color:var(--bad);border-color:var(--bad)}
 .empty{text-align:center;opacity:.55;font-style:italic;padding:28px 0;font-size:1.05em}
+.sec-title{font-size:1.05em;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin:18px 0 8px;opacity:.9}
+.sec-title.usd{color:#9ec9ff}
 input,select{width:100%;background:rgba(0,0,0,.28);color:var(--o);border:1px solid rgba(212,188,114,.4);border-radius:9px;padding:15px 16px;font-family:inherit;font-size:1.12em;outline:none;margin-bottom:12px;-webkit-appearance:none;appearance:none}
 input:focus{border-color:var(--o);box-shadow:0 0 0 3px rgba(212,188,114,.15)}
 input::placeholder{color:rgba(212,188,114,.4)}
@@ -104,6 +107,8 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 5p
 .stats div{background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:9px;padding:12px 6px;text-align:center}
 .stats b{display:block;color:#fff;font-size:1.22em}
 .stats small{font-style:italic;opacity:.75;font-size:.85em}
+.stats.usd-stats div{border-color:rgba(100,180,255,.3)}
+.stats.usd-stats b{color:#9ec9ff}
 .alert{border:1px solid var(--bad);color:var(--bad);border-radius:9px;padding:13px;margin-bottom:14px;text-align:center;background:rgba(233,167,157,.08)}
 .toast{position:fixed;left:50%;bottom:calc(108px + env(safe-area-inset-bottom));transform:translate(-50%,16px);background:var(--o);color:var(--g);padding:12px 22px;border-radius:28px;font-weight:700;opacity:0;pointer-events:none;transition:all .28s;z-index:300;box-shadow:0 8px 28px rgba(0,0,0,.35)}
 .toast.on{opacity:1;transform:translate(-50%,0)}
@@ -362,15 +367,26 @@ async function recargar(manual){
     S.cobros=res.filter(g=>g.cob!=null && !esUsd(g));
     S.usd=res.filter(g=>g.cob!=null && esUsd(g));
 
+    // Clientes: CUP + USD en la misma ficha, separados
     const cm=new Map();
     res.sort((a,b)=>b.fecha<a.fecha?-1:b.fecha>a.fecha?1:0).forEach(g=>{
-      if(esUsd(g))return;
       if(g.nombre==="Ingreso extra"&&!g.tel)return;
       let c=cm.get(g.key);
-      if(!c){c=cm.set(g.key,{key:g.key,nombre:g.nombre,tel:g.tel,items:[],total:0,vis:0,prop:0,desc:0,ns:0,deuda:0,nDeuda:0}).get(g.key)}
-      c.items.push(g);
-      if(g.cob!=null){c.total+=g.con;c.vis++;c.prop+=g.prop;c.desc+=g.desc}
-      if(g.ns){c.ns++;if(!g.nsc){c.nDeuda++;c.deuda+=g.esp}}
+      if(!c){
+        c=cm.set(g.key,{
+          key:g.key,nombre:g.nombre,tel:g.tel,
+          items:[],total:0,vis:0,prop:0,desc:0,ns:0,deuda:0,nDeuda:0,
+          usdItems:[],usdTotal:0
+        }).get(g.key);
+      }
+      if(esUsd(g)){
+        c.usdItems.push(g);
+        if(g.cob!=null)c.usdTotal+=g.con;
+      }else{
+        c.items.push(g);
+        if(g.cob!=null){c.total+=g.con;c.vis++;c.prop+=g.prop;c.desc+=g.desc}
+        if(g.ns){c.ns++;if(!g.nsc){c.nDeuda++;c.deuda+=g.esp}}
+      }
     });
     S.cli=cm;
     pintaCaja();pintaCli();
@@ -411,7 +427,7 @@ function pintaCaja(){
   const [a,b]=rango();
   const it=S.cobros.filter(c=>c.fecha>=a&&c.fecha<=b).sort((x,y)=>y.fecha<x.fecha?-1:y.fecha>x.fecha?1:y.id-x.id);
   const p=it.reduce((x,c)=>x+c.prop,0),ds=it.reduce((x,c)=>x+c.desc,0);
-  $("#perSum").textContent=it.length?`${it.length} cobros · propinas ${fmt(p)} · descuentos ${fmt(ds)} · toca uno para editarlo`:"";
+  $("#perSum").textContent=it.length?`${it.length} cobros · propinas ${fmt(p)} · descuentos ${fmt(ds)} · toca uno para editarlo o borrarlo`:"";
   $("#lista").innerHTML=it.length?it.map(c=>`<div class="row" data-k="${esc(c.k)}"><div><b>${esc(c.nombre||"Sin nombre")}</b><small>${esc(c.serv||"")}${S.per!=="dia"?" · "+bonita(c.fecha):""}</small></div><div class="amt">${fmt(c.con)}<small>${c.prop?`<span class="tag">+${fmt(c.prop)}</span>`:""}${c.desc?`<span class="tag">−${fmt(c.desc)}</span>`:""}</small></div></div>`).join(""):'<div class="empty">Todavía no hay cobros en este periodo</div>';
 }
 function moverDia(n){const d=addDays(S.dia,n);if(d>hoy())return;S.dia=d;pintaCaja()}
@@ -478,23 +494,52 @@ function pintaCli(){
     const matchBusqueda=!q||(c.nombre||"").toLowerCase().includes(q)||(c.tel||"").includes(q);
     return matchFiltro&&matchBusqueda;
   });
-  l.sort((a,b)=>b.nDeuda-a.nDeuda||b.total-a.total);
-  $("#cliLista").innerHTML=l.length?l.map(c=>`<div class="row" onclick="ficha('${esc(c.key).replace(/'/g,"\\'")}')"><div><b>${esc(c.nombre||"Sin nombre")}</b><small>${c.vis} visitas${c.vis?" · prom. "+fmt(c.total/c.vis):""}${c.nDeuda?`<span class="tag debt">Debe ${c.nDeuda} turno${c.nDeuda>1?"s":""} · ${fmt(c.deuda)}</span>`:""}</small></div><div class="amt">${fmt(c.total)}</div></div>`).join(""):'<div class="empty">No hay clientes que mostrar</div>';
+  l.sort((a,b)=>b.nDeuda-a.nDeuda||(b.total+b.usdTotal)-(a.total+a.usdTotal));
+  $("#cliLista").innerHTML=l.length?l.map(c=>{
+    const usdTag=c.usdTotal>0?`<span class="tag usd">${fmtUsd(c.usdTotal)} USD</span>`:"";
+    return `<div class="row" onclick="ficha('${esc(c.key).replace(/'/g,"\\'")}')"><div><b>${esc(c.nombre||"Sin nombre")}</b><small>${c.vis} visitas${c.vis?" · prom. "+fmt(c.total/c.vis):""}${c.nDeuda?`<span class="tag debt">Debe ${c.nDeuda} · ${fmt(c.deuda)}</span>`:""}${usdTag}</small></div><div class="amt">${fmt(c.total)}</div></div>`;
+  }).join(""):'<div class="empty">No hay clientes que mostrar</div>';
 }
 function ficha(k){
-  const c=S.cli.get(k);if(!c){toast("Este cobro no tiene ficha");return}
+  const c=S.cli.get(k);if(!c){toast("Cliente no encontrado");return}
   S.ekey=k;
-  const it=c.items.map(g=>`<div class="row" ${g.cob!=null?`data-k="${esc(g.k)}"`:'style="cursor:default"'}><div><b>${bonita(g.fecha)}</b><small>${esc(g.serv||"")}${g.ns?`<span class="tag ${g.nsc?"":"debt"}">No vino${g.nsc?" · pagado":""}</span>`:""}</small></div><div class="amt">${g.cob!=null?fmt(g.con):"—"}<small>${g.prop?`<span class="tag">+${fmt(g.prop)}</span>`:""}${g.desc?`<span class="tag">−${fmt(g.desc)}</span>`:""}</small></div></div>`).join("");
+
+  // Lista CUP
+  const itCup=c.items.map(g=>`<div class="row" ${g.cob!=null?`data-k="${esc(g.k)}"`:'style="cursor:default"'}><div><b>${bonita(g.fecha)}</b><small>${esc(g.serv||"")}${g.ns?`<span class="tag ${g.nsc?"":"debt"}">No vino${g.nsc?" · pagado":""}</span>`:""}</small></div><div class="amt">${g.cob!=null?fmt(g.con):"—"}<small>${g.prop?`<span class="tag">+${fmt(g.prop)}</span>`:""}${g.desc?`<span class="tag">−${fmt(g.desc)}</span>`:""}</small></div></div>`).join("");
+
+  // Lista USD
+  const itUsd=c.usdItems.length?c.usdItems.map(g=>`<div class="row" data-k="${esc(g.k)}"><div><b>${bonita(g.fecha)}</b><small>${esc((g.serv||"").replace(/^USD:\s*/,""))}</small></div><div class="amt" style="color:#9ec9ff">${fmtUsd(g.con)}</div></div>`).join(""):"";
+
   abrir(`<div class="sh"><h3>${esc(c.nombre||"Cliente")}</h3><button class="ico" onclick="cerrar()">&#10005;</button></div>
   <div class="sum" style="margin-bottom:12px">${esc(c.tel||"Sin teléfono")}</div>
   ${c.nDeuda?`<div class="alert">Debe ${c.nDeuda} turno${c.nDeuda>1?"s":""} por no asistir: ${fmt(c.deuda)}</div>`:""}
-  <div class="stats"><div><b>${fmt(c.total)}</b><small>Ingresado</small></div><div><b>${c.vis}</b><small>Visitas</small></div><div><b>${c.vis?fmt(c.total/c.vis):"$0"}</b><small>Promedio</small></div>
-  <div><b>${fmt(c.prop)}</b><small>Propinas</small></div><div><b>${fmt(c.desc)}</b><small>Descuentos</small></div><div><b>${c.ns}</b><small>No vino</small></div></div>
-  <div class="grid2" style="margin-bottom:16px">
-    <button class="btn sm ghost" onclick="editarCliente('${esc(k).replace(/'/g,"\\'")}')">Editar cliente</button>
-    <button class="btn sm danger" onclick="borrarCliente('${esc(k).replace(/'/g,"\\'")}')">Eliminar cliente</button>
+
+  <div class="sec-title">Pagos en CUP</div>
+  <div class="stats">
+    <div><b>${fmt(c.total)}</b><small>Ingresado</small></div>
+    <div><b>${c.vis}</b><small>Visitas</small></div>
+    <div><b>${c.vis?fmt(c.total/c.vis):"$0"}</b><small>Promedio</small></div>
+    <div><b>${fmt(c.prop)}</b><small>Propinas</small></div>
+    <div><b>${fmt(c.desc)}</b><small>Descuentos</small></div>
+    <div><b>${c.ns}</b><small>No vino</small></div>
   </div>
-  ${it}`);
+  ${itCup||'<div class="empty" style="padding:12px 0">Sin cobros en CUP</div>'}
+
+  ${c.usdItems.length?`
+  <div class="sec-title usd">Pagos en USD</div>
+  <div class="stats usd-stats">
+    <div><b>${fmtUsd(c.usdTotal)}</b><small>Total USD</small></div>
+    <div><b>${c.usdItems.length}</b><small>Cobros</small></div>
+    <div><b>—</b><small></small></div>
+  </div>
+  ${itUsd}
+  `:""}
+
+  <div class="grid2" style="margin:20px 0 8px">
+    <button class="btn sm ghost" onclick="editarCliente('${esc(k).replace(/'/g,"\\'")}')">Editar cliente</button>
+    <button class="btn sm danger" onclick="borrarCliente('${esc(k).replace(/'/g,"\\'")}')">Eliminar historial completo</button>
+  </div>
+  <div class="sum">Toca un cobro para editarlo o borrarlo</div>`);
 }
 function editarCliente(k){
   const c=S.cli.get(k);if(!c)return toast("Cliente no encontrado");
@@ -514,8 +559,7 @@ async function guardarCliente(){
   if(!nombre)return toast("Escribe el nombre");
   if(tel&&!/^[0-9]{8}$/.test(tel))return toast("El teléfono debe tener 8 dígitos");
 
-  // Recoger todos los ids de los turnos de este cliente
-  const ids=c.items.map(g=>g.id).filter(Boolean);
+  const ids=[...c.items,...c.usdItems].map(g=>g.id).filter(Boolean);
   if(!ids.length)return toast("No hay registros que actualizar");
 
   const b=$("#cOk");b.disabled=true;b.textContent="Guardando...";
@@ -527,15 +571,15 @@ async function guardarCliente(){
 }
 async function borrarCliente(k){
   const c=S.cli.get(k);if(!c)return toast("Cliente no encontrado");
-  const n=c.items.length;
-  if(!confirm(`¿Eliminar a "${c.nombre||"este cliente"}" y sus ${n} registro${n!==1?"s":""}?\n\nEsto borra todos sus cobros e historial. No se puede deshacer.`))return;
+  const n=c.items.length+c.usdItems.length;
+  if(!confirm(`¿Eliminar TODO el historial de "${c.nombre||"este cliente"}"?\n\nSe borrarán ${n} registro${n!==1?"s":""} (CUP y USD) de la base de datos.\nNo se puede deshacer.`))return;
 
-  const ids=c.items.map(g=>g.id).filter(Boolean);
+  const ids=[...c.items,...c.usdItems].map(g=>g.id).filter(Boolean);
   if(!ids.length)return toast("No hay registros que borrar");
 
   const {error}=await sb.from("turnos").delete().in("id",ids);
   if(error)return toast("No se pudo eliminar");
-  cerrar();toast("Cliente eliminado");
+  cerrar();toast("Historial del cliente eliminado");
   await recargar();
 }
 
@@ -718,7 +762,7 @@ async function borrarInv(id){
   try{await cargarInv()}catch(e){}
 }
 
-/* ---------- EDITAR COBRO ---------- */
+/* ---------- EDITAR / BORRAR COBRO ---------- */
 function editCobro(k){
   const g=S.cobros.find(x=>x.k===k)||S.usd.find(x=>x.k===k);
   if(!g)return toast("No se encontró el cobro");
@@ -732,11 +776,12 @@ function editCobro(k){
     <label class="l">Fecha</label><input id="eFec" type="date" value="${g.fecha}" max="${hoy()}">
     <label class="l">Monto en USD</label><input id="iCob" type="number" inputmode="decimal" value="${nn(g.con)}">
     <button class="btn" style="margin-bottom:0" id="eOk" onclick="guardarEditUsd()">Guardar cambios</button>
-    <button class="btn ghost sm" style="margin-top:14px" onclick="borrarCobroUsd()">Eliminar cobro USD</button>`);
+    <button class="btn danger sm" style="margin-top:14px" onclick="borrarCobroActual()">Eliminar este cobro</button>`);
     return;
   }
 
   const conceptoExtra=g.extra&&g.serv?(g.serv.startsWith("Extra: ")?g.serv.slice(7):g.serv):"";
+
   if(g.extra){
     const dl=[...S.cli.values()].map(c=>`<option value="${esc(c.nombre)}">`).join("");
     abrir(`<div class="sh"><h3>Editar ingreso extra</h3><button class="ico" onclick="cerrar()">&#10005;</button></div>
@@ -757,7 +802,7 @@ function editCobro(k){
     <input id="iPro" type="number" inputmode="decimal" placeholder="auto" value="${g.prop>0?nn(g.prop):""}" oninput="difer()">
     <div class="dif" id="iDif"></div>
     <button class="btn" style="margin-bottom:0" id="eOk" onclick="guardarEdit()">Guardar cambios</button>
-    <button class="btn ghost sm" style="margin-top:14px" onclick="borrarCobro()">Eliminar ingreso extra</button>`);
+    <button class="btn danger sm" style="margin-top:14px" onclick="borrarCobroActual()">Eliminar este cobro</button>`);
   }else{
     abrir(`<div class="sh"><h3>Editar cobro</h3><button class="ico" onclick="cerrar()">&#10005;</button></div>
     <div class="sum" style="margin-bottom:12px">${esc(g.nombre||"Sin nombre")} · ${bonita(g.fecha)}${g.serv?" · "+esc(g.serv):""}</div>
@@ -766,7 +811,8 @@ function editCobro(k){
     <label class="l">Propina (si la dejas vacía, se calcula)</label><input id="iPro" type="number" inputmode="decimal" placeholder="auto" value="${g.prop>0?nn(g.prop):""}" oninput="difer()">
     <div class="dif" id="iDif"></div>
     <button class="btn" style="margin-bottom:0" id="eOk" onclick="guardarEdit()">Guardar cambios</button>
-    ${S.cli.has(g.key)?`<button class="btn ghost sm" style="margin-top:14px" onclick="ficha(S.ekey)">Ver ficha del cliente</button>`:""}`);
+    <button class="btn danger sm" style="margin-top:14px" onclick="borrarCobroActual()">Eliminar este cobro</button>
+    ${S.cli.has(g.key)?`<button class="btn ghost sm" style="margin-top:10px" onclick="ficha(S.ekey)">Ver ficha del cliente</button>`:""}`);
   }
   difer();
 }
@@ -822,21 +868,19 @@ async function guardarEditUsd(){
   if(error||!data||!data.length)return toast("No se pudo guardar");
   cerrar();toast("Cobro USD actualizado");await recargar();
 }
-async function borrarCobro(){
-  const g=S.cobros.find(x=>x.k===S.ek);if(!g||!g.extra)return;
-  if(!confirm("¿Eliminar este ingreso extra de "+fmt(g.con)+"? No se puede deshacer."))return;
-  const q=sb.from("turnos").delete().like("turno","Extra%");
+async function borrarCobroActual(){
+  const g=S.cobros.find(x=>x.k===S.ek)||S.usd.find(x=>x.k===S.ek);
+  if(!g)return toast("No se encontró el cobro");
+
+  const esDolar=esUsd(g);
+  const monto=esDolar?fmtUsd(g.con)+" USD":fmt(g.con);
+  if(!confirm(`¿Eliminar este cobro de ${monto}?\n\n${esc(g.nombre||"")} · ${bonita(g.fecha)}\n\nSe borrará la cita de la base de datos. No se puede deshacer.`))return;
+
+  let q=sb.from("turnos").delete();
   const {data,error}=await (g.rid?q.eq("reserva_id",g.rid):q.eq("id",g.id)).select("id");
   if(error||!data||!data.length)return toast("No se pudo eliminar");
-  cerrar();toast("Ingreso eliminado");await recargar();
-}
-async function borrarCobroUsd(){
-  const g=S.usd.find(x=>x.k===S.ek);if(!g)return;
-  if(!confirm("¿Eliminar este cobro de "+fmtUsd(g.con)+" USD? No se puede deshacer."))return;
-  const q=sb.from("turnos").delete();
-  const {data,error}=await (g.rid?q.eq("reserva_id",g.rid):q.eq("id",g.id)).select("id");
-  if(error||!data||!data.length)return toast("No se pudo eliminar");
-  cerrar();toast("Cobro USD eliminado");await recargar();
+  cerrar();toast("Cobro eliminado");
+  await recargar();
 }
 
 $("#lista").onclick=e=>{const r=e.target.closest(".row[data-k]");if(r)later(()=>editCobro(r.dataset.k))};
