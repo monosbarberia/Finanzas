@@ -143,18 +143,18 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;background:radial-grad
 .view.on>*:nth-child(2){animation-delay:.07s}.view.on>*:nth-child(3){animation-delay:.14s}.view.on>*:nth-child(4){animation-delay:.21s}
 @keyframes rise{from{opacity:0;transform:translateY(16px) scale(.985)}}
 .hero{position:relative;overflow:hidden}
-.hero::before{content:"";position:absolute;left:50%;top:38%;width:300px;height:200px;margin:-100px 0 0 -150px;background:radial-gradient(closest-side,rgba(203,178,106,.22),transparent);animation:breathe 5s ease-in-out infinite;pointer-events:none}
+.hero::before{content:"";position:absolute;left:50%;top:38%;width:400px;height:280px;margin:-140px 0 0 -200px;background:radial-gradient(closest-side,rgba(224,200,120,.6),rgba(203,178,106,.18) 60%,transparent);animation:breathe 4s ease-in-out infinite;pointer-events:none}
 .hero>*{position:relative}
-@keyframes breathe{50%{transform:scale(1.2);opacity:.6}}
+@keyframes breathe{50%{transform:scale(1.25);opacity:.7}}
 .hlab{font-style:normal;text-transform:uppercase;letter-spacing:3px;font-size:.78em;opacity:.8}
-.big{background:linear-gradient(180deg,#fff,#efe2b8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 4px 18px rgba(203,178,106,.3))}
+.big{background:linear-gradient(180deg,#fff,#efe2b8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 4px 18px rgba(203,178,106,.3));line-height:1.2;padding:.08em .04em .16em;font-variant-numeric:lining-nums;font-feature-settings:"lnum"}
 .card{background:linear-gradient(160deg,rgba(0,0,0,.26),rgba(0,0,0,.12))}
 .card::before{content:"";position:absolute;left:12%;right:12%;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(224,204,160,.7),transparent)}
 .card>small:first-child{font-style:normal;text-transform:uppercase;letter-spacing:2.5px;font-size:.74em}
 .btn{position:relative}
 .btn:not(.ghost){overflow:hidden}
-.btn:not(.ghost):not(.sm)::after{content:"";position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.38),transparent);transform:translateX(-130%) skewX(-18deg);animation:sheen 6.5s ease-in-out 1.5s infinite;pointer-events:none}
-@keyframes sheen{0%,62%{transform:translateX(-130%) skewX(-18deg)}100%{transform:translateX(330%) skewX(-18deg)}}
+.btn:not(.ghost):not(.sm)::after{content:"";position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.38),transparent);transform:translateX(-130%) skewX(-18deg);animation:sheen 2s ease-in-out .8s infinite;pointer-events:none}
+@keyframes sheen{0%,45%{transform:translateX(-130%) skewX(-18deg)}100%{transform:translateX(330%) skewX(-18deg)}}
 .tabs{--i:0}
 .tabs::before{content:"";position:absolute;left:8px;top:8px;bottom:calc(8px + env(safe-area-inset-bottom));width:calc((100% - 16px)/4);border-radius:8px;background:linear-gradient(180deg,rgba(203,178,106,.24),rgba(203,178,106,.1));border:1px solid rgba(203,178,106,.32);transform:translateX(calc(var(--i)*100%));transition:transform .55s cubic-bezier(.2,.9,.25,1.12)}
 .tabs button{z-index:1}
@@ -185,6 +185,9 @@ input:focus{box-shadow:0 0 0 3px rgba(203,178,106,.17);background:rgba(0,0,0,.33
 .btn.danger{background:transparent;color:var(--bad);border:1.5px solid var(--bad);box-shadow:none}
 .btn.danger.down{box-shadow:none}.btn.danger.tap{animation-name:tap}.btn.danger.spring{animation-name:spring}
 .stats.usd-stats div{border-color:rgba(169,210,255,.3)}.stats.usd-stats b{color:#a9d2ff}
+
+.hero{border-color:rgba(212,188,114,.42);box-shadow:inset 0 0 60px rgba(212,188,114,.16),0 18px 40px rgba(0,0,0,.38),0 0 38px rgba(212,188,114,.18)}
+.card b,.n,.amt,.stats b{font-variant-numeric:lining-nums}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -206,7 +209,7 @@ input:focus{box-shadow:0 0 0 3px rgba(203,178,106,.17);background:rgba(0,0,0,.33
   <div class="top">
     <div class="brand"><img class="logo" src="logo.png" alt="Mono's" onerror="this.style.display='none'"></div>
     <div class="tools">
-      <button class="ico" id="rf" onclick="recargar(true)" aria-label="Actualizar"><span id="rfi" style="display:inline-block">&#8635;</span></button>
+      <button class="ico" id="rf" onclick="refrescar()" aria-label="Actualizar"><span id="rfi" style="display:inline-block">&#8635;</span></button>
       <button class="ico" onclick="salir()" aria-label="Cerrar sesión">&#10162;</button>
     </div>
   </div>
@@ -225,7 +228,7 @@ input:focus{box-shadow:0 0 0 3px rgba(203,178,106,.17);background:rgba(0,0,0,.33
     <div class="grid3">
       <div class="card"><button class="cp" onclick="copiar(S.vw,this)" aria-label="Copiar semana">&#10064;</button><small>Semana</small><b id="cW">$0</b><div class="subs" id="cW0"></div></div>
       <div class="card"><button class="cp" onclick="copiar(S.vm,this)" aria-label="Copiar mes">&#10064;</button><small>Mes</small><b id="cM">$0</b><div class="subs" id="cM0"></div></div>
-      <div class="card usd" onclick="abrirUsd()"><small>Mes USD</small><b id="cUsd">$0</b><div class="note" id="cUsd0">toca para ver</div></div>
+      <div class="card usd" onclick="abrirUsd()"><button class="cp" onclick="event.stopPropagation();copiar(S.vusd,this)" aria-label="Copiar dólares">&#10064;</button><small>Mes USD</small><b id="cUsd">$0</b><div class="note" id="cUsd0">toca para ver</div></div>
     </div>
     <button class="btn" onclick="later(abrirIngreso)">+ Ingresar ganancia</button>
     <div class="box">
@@ -333,6 +336,7 @@ async function entrar(){
   const {data}=await sb.rpc("es_admin");
   if(data===false){alert("Este usuario no tiene permisos de administrador.");return salir()}
   $("#bFec").min=hoy();$("#bFec").value=S.bdia;
+  try{irTab(sessionStorage.getItem("tab")||"caja")}catch(e){}
   await recargar();cargarBloq();
   document.addEventListener("visibilitychange",()=>{if(!document.hidden)recargar()});
 }
@@ -379,7 +383,10 @@ function construir(rows){
   return res;
 }
 
+function refrescar(){const r=$("#rfi");r.classList.remove("spin");void r.offsetWidth;r.classList.add("spin");setTimeout(()=>location.reload(),450)}
 async function recargar(manual){
+  if(S.busy){S.again=true;return}
+  S.busy=true;
   const rf=$("#rfi");rf.classList.remove("spin");void rf.offsetWidth;rf.classList.add("spin");
   try{
     const res=construir(await traerTodo());
@@ -398,6 +405,7 @@ async function recargar(manual){
     try{await cargarInv()}catch(e){}
     if(manual)toast("Actualizado");
   }catch(e){toast("No se pudo cargar. Revisa la conexión")}
+  finally{S.busy=false;if(S.again){S.again=false;recargar()}}
 }
 
 /* ---------- CAJA ---------- */
@@ -624,10 +632,14 @@ async function proximos(){
 function irDia(f){S.bdia=f;$("#bFec").value=f;cargarBloq()}
 
 /* ---------- UI común ---------- */
-$(".tabs").onclick=e=>{const b=e.target.closest("button");if(!b)return;
-  $(".tabs").style.setProperty("--i",$$(".tabs button").indexOf(b));
-  $$(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
-  $$(".view").forEach(v=>v.classList.toggle("on",v.id==="v-"+b.dataset.v));window.scrollTo(0,0)};
+function irTab(v){
+  const bs=$$(".tabs button"),b=bs.find(x=>x.dataset.v===v)||bs[0];
+  $(".tabs").style.setProperty("--i",bs.indexOf(b));
+  bs.forEach(x=>x.classList.toggle("on",x===b));
+  $$(".view").forEach(w=>w.classList.toggle("on",w.id==="v-"+b.dataset.v));
+  try{sessionStorage.setItem("tab",b.dataset.v)}catch(e){}
+}
+$(".tabs").onclick=e=>{const b=e.target.closest("button");if(!b)return;irTab(b.dataset.v);window.scrollTo(0,0)};
 function abrir(h){clearTimeout(abrir.t);$("#ov").classList.remove("out");$("#sheet").innerHTML=h;$("#ov").classList.add("on")}
 function cerrar(){const o=$("#ov");if(!o.classList.contains("on"))return;o.classList.add("out");clearTimeout(abrir.t);abrir.t=setTimeout(()=>o.classList.remove("on","out"),230)}
 
@@ -870,7 +882,7 @@ document.addEventListener("pointerup",()=>{
 });
 document.addEventListener("pointercancel",()=>{if(!P)return;clearTimeout(P.t);if(P.on)P.el.classList.remove("down");P=null});
 
-window.addEventListener("error",e=>toast("Error: "+e.message));
+window.addEventListener("error",e=>{if(/ResizeObserver|Script error/.test(e.message||""))return;toast("Error: "+e.message)});
 window.addEventListener("unhandledrejection",e=>toast("Error: "+((e.reason&&e.reason.message)||"desconocido")));
 init();
 </script>
