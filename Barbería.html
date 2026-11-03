@@ -345,7 +345,7 @@ async function traerTodo(){
   let all=[],from=0;
   for(;;){
     const {data,error}=await sb.from("turnos")
-      .select("id,fecha,turno,nombre,telefono,reserva_id,servicios,total,precio_esperado,precio_cobrado,propina,descuento,no_show,no_show_cobrado")
+      .select("id,fecha,turno,nombre,telefono,reserva_id,servicios,total,precio_esperado,precio_cobrado,propina,descuento,no_show,no_show_cobrado,moneda")
       .gte("fecha",DESDE).or("precio_cobrado.not.is.null,no_show.eq.true").order("id").range(from,from+999);
     if(error)throw error;
     all=all.concat(data);if(data.length<1000)break;from+=1000;
@@ -358,18 +358,20 @@ function construir(rows){
   const m=new Map();
   rows.forEach(r=>{
     const k=r.reserva_id||("id"+r.id);let g=m.get(k);
-    if(!g){g={k,id:r.id,fecha:r.fecha,nombre:r.nombre,tel:r.telefono,serv:r.servicios,esp:0,cob:null,prop:0,desc:0,ns:false,nsc:false,rid:r.reserva_id,extra:false};m.set(k,g)}
+    if(!g){g={k,id:r.id,fecha:r.fecha,nombre:r.nombre,tel:r.telefono,serv:r.servicios,esp:0,cob:null,prop:0,desc:0,ns:false,nsc:false,rid:r.reserva_id,extra:false,moneda:r.moneda||"CUP"};m.set(k,g)}
     if(r.precio_cobrado!=null)g.cob=Math.max(g.cob??0,+r.precio_cobrado);
     g.esp=Math.max(g.esp,+(r.precio_esperado??r.total??0));
     g.prop=Math.max(g.prop,+(r.propina||0));g.desc=Math.max(g.desc,+(r.descuento||0));
     if(r.no_show)g.ns=true;if(r.no_show_cobrado)g.nsc=true;
     if(/^Extra /.test(r.turno||""))g.extra=true;
+    if(r.moneda==="USD")g.moneda="USD";
     if(r.fecha<g.fecha)g.fecha=r.fecha;
   });
   const res=[...m.values()];
   res.forEach(g=>{
     g.key=keyCli(g.tel,g.nombre);
-    if(g.cob!=null){
+    if(g.cob!=null&&esUsd(g)){g.desc=0;g.con=g.cob;g.sin=Math.max(g.cob-g.prop,0)} // en USD el esperado está en CUP: no se compara
+    else if(g.cob!=null){
       // precio del servicio ya con descuento
       const base=g.esp>0?Math.max(g.esp-g.desc,0):null;
       // propina que ya viene dentro de lo cobrado (cobrado por encima del precio)
@@ -708,7 +710,7 @@ async function borrarInv(id){
 
 
 /* ---------- USD ---------- */
-const esUsd=g=>String(g.serv||"").startsWith("USD:");
+const esUsd=g=>g.moneda==="USD"||String(g.serv||"").startsWith("USD:");
 const fmtUsd=n=>"$"+(Math.round((+n||0)*100)/100).toLocaleString("en-US",{maximumFractionDigits:2});
 const nk=s=>String(s||"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 function tasa(){try{return parseFloat(localStorage.getItem("tasaUsd"))||0}catch(e){return 0}}
@@ -741,7 +743,7 @@ async function guardarUsd(){
   if(!fec)return toast("Elige la fecha");
   if(tel&&!/^[0-9]{8}$/.test(tel))return toast("El teléfono debe tener 8 dígitos");
   const b=$("#uOk");b.disabled=true;b.textContent="Guardando...";
-  const {error}=await sb.from("turnos").insert({fecha:fec,turno:turnoExtra(),estado:"ocupado",nombre,telefono:tel,reserva_id:crypto.randomUUID(),notificado:true,servicios:"USD: "+con,total:Math.round(mon),precio_esperado:mon,precio_cobrado:mon,propina:0,descuento:0,no_show:false,cancelado:false});
+  const {error}=await sb.from("turnos").insert({fecha:fec,turno:turnoExtra(),estado:"ocupado",nombre,telefono:tel,reserva_id:crypto.randomUUID(),notificado:true,moneda:"USD",servicios:"USD: "+con,total:Math.round(mon),precio_esperado:mon,precio_cobrado:mon,propina:0,descuento:0,no_show:false,cancelado:false});
   b.disabled=false;b.textContent="Guardar en USD";
   if(error)return toast((error.message||"").includes("LIMITE_SEMANAL")?"Ese teléfono ya tiene 3 citas esta semana":"No se pudo guardar");
   cerrar();toast("Guardado en USD");S.dia=fec;await recargar();
@@ -827,7 +829,7 @@ async function guardarEditUsd(){
   if(!(mon>0))return toast("Escribe el monto en dólares");
   if(!fec)return toast("Elige la fecha");
   if(tel&&!/^[0-9]{8}$/.test(tel))return toast("El teléfono debe tener 8 dígitos");
-  const patch={nombre:$("#eNom").value.trim()||"Ingreso extra",telefono:tel,servicios:"USD: "+($("#eCon").value.trim()||"cobro"),fecha:fec,precio_esperado:mon,precio_cobrado:mon,total:Math.round(mon)};
+  const patch={moneda:"USD",nombre:$("#eNom").value.trim()||"Ingreso extra",telefono:tel,servicios:"USD: "+($("#eCon").value.trim()||"cobro"),fecha:fec,precio_esperado:mon,precio_cobrado:mon,total:Math.round(mon)};
   const b=$("#eOk");b.disabled=true;b.textContent="Guardando...";
   const q=sb.from("turnos").update(patch);
   const {data,error}=await (g.rid?q.eq("reserva_id",g.rid):q.eq("id",g.id)).select("id");
