@@ -438,10 +438,13 @@ function pintaCaja(){
   S.vusd=sumaUsd(mes+"-01",mes+"-31");const tz=tasa();
   $("#cUsd").textContent=fmtUsd(S.vusd);$("#cUsd0").textContent=tz?"≈ "+fmt(S.vusd*tz)+" CUP":"toca para ver";
   const [a,b]=rango();
-  const it=S.cobros.filter(c=>c.fecha>=a&&c.fecha<=b).sort((x,y)=>y.fecha<x.fecha?-1:y.fecha>x.fecha?1:y.id-x.id);
-  const p=it.reduce((x,c)=>x+c.prop,0),ds=it.reduce((x,c)=>x+c.desc,0);
-  $("#perSum").textContent=it.length?`${it.length} cobros · propinas ${fmt(p)} · descuentos ${fmt(ds)} · toca uno para editarlo`:"";
-  $("#lista").innerHTML=it.length?it.map(c=>`<div class="row" data-k="${esc(c.k)}"><div><b>${esc(c.nombre||"Sin nombre")}</b><small>${esc(c.serv||"")}${S.per!=="dia"?" · "+bonita(c.fecha):""}</small></div><div class="amt">${fmt(c.con)}<small>${c.chk?`<span class="tag debt">revisar</span>`:""}${c.prop?`<span class="tag">+${fmt(c.prop)}</span>`:""}${c.desc?`<span class="tag">−${fmt(c.desc)}</span>`:""}</small></div></div>`).join(""):'<div class="empty">Todavía no hay cobros en este periodo</div>';
+  const it=[...S.cobros,...S.usd].filter(c=>c.fecha>=a&&c.fecha<=b).sort((x,y)=>y.fecha<x.fecha?-1:y.fecha>x.fecha?1:y.id-x.id);
+  const cup=it.filter(c=>!esUsd(c)),nUsd=it.length-cup.length;
+  const p=cup.reduce((x,c)=>x+c.prop,0),ds=cup.reduce((x,c)=>x+c.desc,0);
+  $("#perSum").textContent=it.length?`${cup.length} cobros · propinas ${fmt(p)} · descuentos ${fmt(ds)}${nUsd?` · ${nUsd} en USD`:""} · toca uno para editarlo`:"";
+  $("#lista").innerHTML=it.length?it.map(c=>{
+    const u=esUsd(c),sv=String(c.serv||"").replace(/^USD:\s*/,"");
+    return `<div class="row" data-k="${esc(c.k)}"><div><b>${esc(c.nombre||"Sin nombre")}</b><small>${esc(sv)}${S.per!=="dia"?" · "+bonita(c.fecha):""}</small></div><div class="amt"${u?' style="color:#a9d2ff"':""}>${u?fmtUsd(c.con)+" USD":fmt(c.con)}<small>${u?`<span class="tag usd">USD</span>`:`${c.prop?`<span class="tag">+${fmt(c.prop)}</span>`:""}${c.desc?`<span class="tag">−${fmt(c.desc)}</span>`:""}`}</small></div></div>`}).join(""):'<div class="empty">Todavía no hay cobros en este periodo</div>';
 }
 function moverDia(n){const d=addDays(S.dia,n);if(d>hoy())return;S.dia=d;pintaCaja()}
 $("#perSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;S.per=b.dataset.p;$$("#perSeg button").forEach(x=>x.classList.toggle("on",x===b));pintaCaja()};
