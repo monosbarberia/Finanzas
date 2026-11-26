@@ -680,9 +680,20 @@ const filaCob=g=>`<div class="row" ${g.cob!=null?`data-k="${esc(g.k)}"`:'style="
 function ficha(k){
   const c=S.cli.get(k);if(!c){toast("Cliente no encontrado");return}
   S.ekey=k;const nu=c.usdItems.length;
+  // deudas = no-shows no cobrados
+  const deudas=(c.items||[]).filter(g=>g.ns&&!g.nsc);
+  const deudasHtml=deudas.length?`<div class="sec-title" style="color:var(--bad)">Deudas por no-show</div>
+  ${deudas.map(g=>`<div class="row" style="cursor:default">
+    <div><b>${bonita(g.fecha)}</b><small>${esc(g.serv||"")}<span class="tag debt">No vino</span></small></div>
+    <div class="amt" style="color:var(--bad)">${fmt(g.esp||0)}
+      <button class="btn sm" style="margin:6px 0 0;padding:8px 12px;font-size:.85em" onclick="cobrarDeuda('${esc(g.k)}')">Cobrar</button>
+    </div>
+  </div>`).join("")}
+  <button class="btn" style="margin:8px 0 16px" onclick="cobrarTodasDeudas()">Cobrar todas (${fmt(c.deuda)})</button>`:"";
   abrir(`<div class="sh"><h3>${esc(c.nombre||"Cliente")}</h3><button class="ico" onclick="cerrar()">&#10005;</button></div>
   <div class="sum" style="margin-bottom:12px">${esc(c.tel||"Sin teléfono")}</div>
   ${c.nDeuda?`<div class="alert">Debe ${c.nDeuda} turno${c.nDeuda>1?"s":""} por no asistir: ${fmt(c.deuda)}</div>`:""}
+  ${deudasHtml}
   <div class="sec-title">Pagado en CUP</div>
   <div class="stats"><div><b>${fmt(c.total)}</b><small>Ingresado</small></div><div><b>${c.vis}</b><small>Visitas</small></div><div><b>${c.vis?fmt(c.total/c.vis):"$0"}</b><small>Promedio</small></div>
   <div><b>${fmt(c.prop)}</b><small>Propinas</small></div><div><b>${fmt(c.desc)}</b><small>Descuentos</small></div><div><b>${c.ns}</b><small>No vino</small></div></div>
@@ -979,6 +990,65 @@ function toggleEd(c){
   $("#iEsp").value=t||"";if(!cob||cob===antes)$("#iCob").value=t||"";
   difer();
 }
+
+async function cobrarDeuda(k){
+  const g=(S.cobros||[]).find(x=>x.k===k) || (S.rows||[]).map(r=>({k:r.reserva_id||("id"+r.id),id:r.id,rid:r.reserva_id,esp:+(r.precio_esperado||r.total||0),fecha:r.fecha,serv:r.servicios,ns:r.no_show,nsc:r.no_show_cobrado})).find(x=>x.k===k);
+  // better: look in client items
+  const c=S.cli.get(S.ekey);
+  const item=c?(c.items||[]).find(x=>x.k===k):null;
+  const target=item||g;
+  if(!target)return toast("No se encontró la deuda");
+  const esp=target.esp||0;
+  abrir(`<div class="sh"><h3>Cobrar no-show</h3><button class="ico" onclick="cerrar()">✕</button></div>
+    <p style="color:var(--suave);margin:0 0 10px">${bonita(target.fecha)} · ${esc(target.serv||"")}</p>
+    <label class="l">Monto a cobrar</label>
+    <input id="dCob" type="number" inputmode="decimal" value="${esp||""}" placeholder="0">
+    <div class="dif" id="dDif" style="margin-bottom:8px">Se quitará el no-show al cobrar</div>
+    <button class="btn" id="dOk" onclick="guardarDeuda('${esc(target.k)}')">Confirmar cobro</button>`);
+}
+async function guardarDeuda(k){
+  const cob=num($("#dCob").value);
+  if(!(cob>0))return toast("Escribe el monto");
+  const c=S.cli.get(S.ekey);
+  const item=c?(c.items||[]).find(x=>x.k===k):null;
+  if(!item)return toast("No se encontró el registro");
+  const b=$("#dOk");b.disabled=true;b.textContent="Guardando...";
+  const patch={precio_cobrado:cob,precio_esperado:item.esp||cob,propina:0,descuento:0,no_show_cobrado:true,no_show:false};
+  let err=null;
+  if(item.rid){
+    const r=await sb.from("turnos").update(patch).eq("reserva_id",item.rid);
+    err=r.error;
+  }else if(item.id){
+    const r=await sb.from("turnos").update(patch).eq("id",item.id);
+    err=r.error;
+  }else{
+    err={message:"Sin id de registro"};
+  }
+  b.disabled=false;b.textContent="Confirmar cobro";
+  if(err)return toast("Error: "+err.message);
+  toast("Deuda cobrada · no-show quitado");
+  cerrar();recargar();
+}
+async function cobrarTodasDeudas(){
+  const c=S.cli.get(S.ekey);if(!c)return;
+  const deudas=(c.items||[]).filter(g=>g.ns&&!g.nsc);
+  if(!deudas.length)return toast("No hay deudas");
+  if(!confirm("¿Cobrar las "+deudas.length+" deudas ("+fmt(c.deuda)+") y quitar los no-show?"))return;
+  let ok=0,fail=0;
+  for(const item of deudas){
+    const cob=item.esp||0;
+    if(!(cob>0)){fail++;continue}
+    const patch={precio_cobrado:cob,precio_esperado:cob,propina:0,descuento:0,no_show_cobrado:true,no_show:false};
+    let err=null;
+    if(item.rid)err=(await sb.from("turnos").update(patch).eq("reserva_id",item.rid)).error;
+    else if(item.id)err=(await sb.from("turnos").update(patch).eq("id",item.id)).error;
+    else err=true;
+    if(err)fail++;else ok++;
+  }
+  toast(ok?"Cobradas: "+ok+(fail?" · fallidas: "+fail:""):"No se pudo cobrar");
+  cerrar();recargar();
+}
+
 function editCobro(k){
   const g=S.cobros.find(x=>x.k===k)||S.usd.find(x=>x.k===k);
   if(!g)return toast("No se encontró el cobro");
@@ -993,8 +1063,7 @@ function editCobro(k){
   ${concepto?`<label class="l">Concepto</label><input id="eCon" maxlength="60" value="${esc(g.serv.slice(7))}">`:`<label class="l">Servicios</label><div class="chips" id="eSrv"></div>`}
   ${g.extra?`<label class="l">Fecha</label><input id="eFec" type="date" value="${g.fecha}" max="${hoy()}">`:`<div class="sum">Reserva del ${bonita(g.fecha)}</div>`}
   <label class="l">Precio esperado</label><input id="iEsp" type="number" inputmode="decimal" placeholder="0" value="${g.esp>0?nn(g.esp):""}" oninput="difer()">
-  <label class="l">Cobrado (total, propina incluida)</label><input id="iCob" type="number" inputmode="decimal" placeholder="0" value="${nn(g.con)}" oninput="difer()">
-  0?nn(g.prop):""}" oninput="difer()">
+  <label class="l">Precio cobrado</label><input id="iCob" type="number" inputmode="decimal" placeholder="0" value="${nn(g.con)}" oninput="difer()">
   <div class="dif" id="iDif"></div>
   <button class="btn" style="margin-bottom:0" id="eOk" onclick="guardarEdit()">Guardar cambios</button>
   <button class="btn danger sm" style="margin-top:14px" onclick="quitarCobro()">${g.extra?"Eliminar este ingreso":"Quitar el cobro (la reserva se queda)"}</button>`);
@@ -1005,7 +1074,7 @@ async function guardarEdit(){
   const g=S.cobros.find(x=>x.k===S.ek);if(!g)return;
   const cob=num($("#iCob").value);if(!(cob>0))return toast("Escribe cuánto cobraste");
   const esp=num($("#iEsp").value)||cob;
-  const pro=raw!==""?Math.max(num(raw),0):(cob>esp?cob-esp:0),desc=Math.max(esp-(cob-pro),0);
+  const pro=cob>esp?cob-esp:0,desc=Math.max(esp-cob,0);
   let nombre=$("#eNom").value.trim();const tel=$("#eTel").value.trim()||null,con=$("#eCon");
   if(tel&&!/^[0-9]{8}$/.test(tel))return toast("El teléfono debe tener 8 dígitos");
   let serv;
