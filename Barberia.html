@@ -273,6 +273,67 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 4p
 .row.sel{background:rgba(203,178,106,.18);border-radius:8px}
 .card b,.n,.amt,.stats b{font-variant-numeric:lining-nums}
 
+
+/* ===== FAB + menú flotante ===== */
+.fab-wrap{position:fixed;right:18px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:60;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.fab{
+  width:58px;height:58px;border-radius:50%;border:none;cursor:pointer;
+  background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(0,0,0,.2));
+  border:1px solid rgba(214,190,112,.4);
+  color:var(--oro);font-size:2rem;font-weight:300;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 22px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.15);
+  transition:transform .2s cubic-bezier(.2,.9,.3,1.2),background .25s,color .25s,box-shadow .25s;
+}
+.fab span{display:block;transform:translateY(-1px)}
+.fab.open,.fab:active{
+  background:var(--oro-grad);color:var(--verde);
+  box-shadow:0 6px 18px rgba(203,178,106,.45),inset 0 1px 0 rgba(255,255,255,.6);
+  transform:scale(.94) rotate(45deg);
+}
+.fab-menu{display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none;opacity:0;transform:translateY(12px) scale(.92);transition:all .28s cubic-bezier(.2,.9,.3,1.15)}
+.fab-menu.show{pointer-events:auto;opacity:1;transform:none}
+.fab-item{
+  display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:28px;
+  background:var(--oro-grad);color:var(--verde);border:none;
+  font:700 1rem var(--serif);letter-spacing:.5px;cursor:pointer;
+  box-shadow:0 6px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.5);
+  transform-origin:right center;
+  animation:fabPop .4s cubic-bezier(.2,1.2,.4,1) both;
+}
+.fab-item:active{transform:scale(.96)}
+@keyframes fabPop{from{opacity:0;transform:translateY(16px) scale(.85)}to{opacity:1;transform:none}}
+
+/* Sub-tabs inside Agenda */
+.subtabs{display:flex;gap:6px;margin-bottom:14px}
+.subtabs button{flex:1;background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:10px;padding:11px 8px;font-size:.95em;font-weight:600;color:var(--crema);transition:all .15s}
+.subtabs button.on{background:var(--oro-grad);color:var(--verde);border-color:var(--oro)}
+
+/* Calendar styles */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px}
+.cal-nav .hlab{flex:1;text-align:center;font-size:.95em;letter-spacing:1px;text-transform:uppercase;color:var(--suave)}
+.cal-grid{display:grid;gap:6px}
+.cal-day-head{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px}
+.cal-day-head span{text-align:center;font-size:.72em;letter-spacing:1px;text-transform:uppercase;color:var(--suave);padding:4px 0}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-cell{aspect-ratio:1;border-radius:10px;border:1px solid rgba(214,190,112,.15);background:rgba(0,0,0,.18);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.9em;cursor:pointer;transition:all .15s;position:relative}
+.cal-cell:hover{border-color:var(--oro);background:rgba(203,178,106,.1)}
+.cal-cell.today{border-color:var(--oro);box-shadow:0 0 0 1px var(--oro)}
+.cal-cell.other{opacity:.35}
+.cal-cell.has{background:rgba(46,180,110,.12);border-color:rgba(46,180,110,.35)}
+.cal-cell .dot{width:5px;height:5px;border-radius:50%;background:var(--oro);margin-top:2px}
+.cal-slots{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.cal-slot{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.2);cursor:pointer;transition:all .15s}
+.cal-slot:hover{border-color:var(--oro);background:rgba(203,178,106,.08)}
+.cal-slot.free{border-style:dashed;opacity:.7}
+.cal-slot.busy{border-color:rgba(203,178,106,.45);background:rgba(203,178,106,.1)}
+.cal-slot.ns{border-color:rgba(233,167,157,.45);background:rgba(233,167,157,.08)}
+.cal-slot .hora{width:72px;font-weight:700;color:var(--oro);flex-shrink:0}
+.cal-slot .info{flex:1;min-width:0}
+.cal-slot .info b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-slot .info small{display:block;color:var(--suave);font-size:.85em}
+.cal-slot .estado{font-size:.72em;letter-spacing:.5px;text-transform:uppercase;padding:3px 8px;border-radius:20px;border:1px solid}
+
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -315,7 +376,7 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 4p
       <div class="card"><button class="cp" onclick="copiar(S.vm,this)" aria-label="Copiar mes">&#10064;</button><small>Mes</small><b id="cM">$0</b><div class="subs" id="cM0"></div></div>
       <div class="card usd" onclick="abrirUsd()"><button class="cp" onclick="event.stopPropagation();copiar(S.vusd,this)" aria-label="Copiar dólares">&#10064;</button><small>Mes USD</small><b id="cUsd">$0</b><div class="note" id="cUsd0">toca para ver</div></div>
     </div>
-    <button class="btn" onclick="later(abrirIngreso)">+ Ingresar ganancia</button>
+    
     <div class="box">
       <div class="seg" id="perSeg">
         <button data-p="dia" class="on">Día</button><button data-p="sem">Semana</button><button data-p="mes">Mes</button>
@@ -326,10 +387,32 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 4p
   </section>
 
   <section class="view" id="v-cli">
-    <div class="box">
-      <input id="cBus" type="text" placeholder="Buscar cliente" oninput="pintaCli()">
-      <div class="seg" id="cliSeg"><button data-f="todos" class="on">Todos</button><button data-f="deben">Deben turno</button></div>
-      <div id="cliLista"></div>
+    <div class="subtabs" id="agendaTabs">
+      <button class="on" data-a="clientes">Clientes</button>
+      <button data-a="calendario">Calendario</button>
+    </div>
+    <div id="agenda-clientes">
+      <div class="box">
+        <input id="cBus" type="text" placeholder="Buscar cliente" oninput="pintaCli()">
+        <div class="seg" id="cliSeg"><button data-f="todos" class="on">Todos</button><button data-f="deben">Deben turno</button></div>
+        <div id="cliLista"></div>
+      </div>
+    </div>
+    <div id="agenda-calendario" hidden>
+      <div class="box">
+        <div class="seg" id="calPer">
+          <button data-p="dia" class="on">Día</button>
+          <button data-p="sem">Semana</button>
+          <button data-p="mes">Mes</button>
+        </div>
+        <div class="cal-nav">
+          <button class="ico" onclick="calMover(-1)">‹</button>
+          <div class="hlab" id="calLab"></div>
+          <button class="ico" onclick="calMover(1)">›</button>
+        </div>
+        <div id="calBody"></div>
+        <button class="btn" style="margin-top:14px" onclick="later(abrirNuevaCita)">+ Nueva cita</button>
+      </div>
     </div>
   </section>
 
@@ -380,9 +463,19 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 4p
   </section>
 </div>
 
+
+<div class="fab-wrap" id="fabWrap">
+  <div class="fab-menu" id="fabMenu">
+    <button class="fab-item" onclick="cerrarFab();later(abrirIngreso)">Depositar</button>
+  </div>
+  <button class="fab" id="fabBtn" onclick="toggleFab()" aria-label="Acciones">
+    <span>+</span>
+  </button>
+</div>
+
 <nav class="tabs">
   <button class="on" data-v="caja">Caja</button>
-  <button data-v="cli">Clientes</button>
+  <button data-v="cli">Agenda</button>
   <button data-v="inv">Inventario<i class="bdg" id="invBdg" hidden></i></button>
   <button data-v="blq">Bloqueos</button>
   <button data-v="fij">Fijos</button>
@@ -403,6 +496,7 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const hoy=()=>new Intl.DateTimeFormat("en-CA",{timeZone:TZ}).format(new Date());
 const hms=()=>new Intl.DateTimeFormat("en-GB",{timeZone:TZ,hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(new Date()).replace(/:/g,"");
+const iso=d=>{const x=d instanceof Date?d:new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
 const addDays=(s,n)=>{const d=new Date(s+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
 const lunes=s=>addDays(s,-((new Date(s+"T00:00:00Z").getUTCDay()+6)%7));
 const bonita=s=>new Intl.DateTimeFormat("es",{timeZone:"UTC",weekday:"short",day:"numeric",month:"short"}).format(new Date(s+"T00:00:00Z"));
@@ -465,7 +559,7 @@ async function traerTodo(){
 }
 const keyCli=(tel,nom)=>tel&&tel.trim()?tel.trim():"n:"+String(nom||"").toLowerCase().trim();
 
-function construir(rows){
+function construir(rows){S.rows=rows||[];
   const m=new Map();
   rows.forEach(r=>{
     const k=r.reserva_id||("id"+r.id);let g=m.get(k);
@@ -514,7 +608,7 @@ async function recargar(manual){
       else{c.items.push(g);if(g.cob!=null){c.total+=g.con;c.vis++;c.prop+=g.prop;c.desc+=g.desc}if(g.ns){c.ns++;if(!g.nsc){c.nDeuda++;c.deuda+=g.esp}}}
     });
     S.cli=cm;
-    pintaCaja();pintaCli();
+    pintaCaja();pintaCli();if(typeof pintaCal==='function' && !$('#agenda-calendario').hidden)pintaCal();
     try{await cargarInv()}catch(e){}
     if(manual)toast("Actualizado");
   }catch(e){toast("No se pudo cargar. Revisa la conexión")}
@@ -642,7 +736,7 @@ function abrirIngreso(){
   try{
     F={tipo:"corte",sel:new Set(),dirty:false};
     const dl=[...S.cli.values()].map(c=>`<option value="${esc(c.nombre)}">`).join("");
-    abrir(`<div class="sh"><h3>Ingresar ganancia</h3><button class="ico" onclick="cerrar()">&#10005;</button></div>
+    abrir(`<div class="sh"><h3>Depositar</h3><button class="ico" onclick="cerrar()">&#10005;</button></div>
     <div class="seg" id="fSeg"><button class="on" data-t="corte">Corte extra</button><button data-t="extra">Ingreso extra</button></div>
     <div id="fCorte"><input id="iNom" list="dlc" placeholder="Nombre del cliente" autocomplete="off" oninput="autoTel()"><datalist id="dlc">${dl}</datalist>
     <input id="iTel" type="tel" inputmode="numeric" maxlength="8" placeholder="Teléfono (8 dígitos)">
@@ -650,8 +744,7 @@ function abrirIngreso(){
     <div id="fExtra" hidden><input id="iCon" placeholder="Concepto (ej. venta de producto)" maxlength="60"></div>
     <label class="l">Fecha</label><input id="iFec" type="date" value="${hoy()}" max="${hoy()}">
     <label class="l">Precio esperado</label><input id="iEsp" type="number" inputmode="decimal" placeholder="0" oninput="difer()">
-    <label class="l">Cobrado (total, propina incluida)</label><input id="iCob" type="number" inputmode="decimal" placeholder="0" oninput="F.dirty=true;difer()">
-    <label class="l">Propina (si la dejas vacía, se calcula)</label><input id="iPro" type="number" inputmode="decimal" placeholder="auto" oninput="difer()">
+    <label class="l">Precio cobrado</label><input id="iCob" type="number" inputmode="decimal" placeholder="0" oninput="F.dirty=true;difer()">
     <div class="dif" id="iDif"></div>
     <button class="btn" style="margin:0" id="iOk" onclick="guardar()">Guardar</button>`);
     $("#fSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;F.tipo=b.dataset.t;$$("#fSeg button").forEach(x=>x.classList.toggle("on",x===b));$("#fCorte").hidden=F.tipo!=="corte";$("#fExtra").hidden=F.tipo!=="extra"};
@@ -663,9 +756,9 @@ function abrirIngreso(){
 }
 function autoTel(){const n=$("#iNom").value.trim().toLowerCase();const c=[...S.cli.values()].find(c=>(c.nombre||"").toLowerCase()===n);if(c&&c.tel&&!$("#iTel").value)$("#iTel").value=c.tel}
 function calc(){
-  const e=num($("#iEsp").value),c=num($("#iCob").value),raw=$("#iPro").value.trim();
-  const p=raw!==""?Math.max(num(raw),0):(e&&c>e?c-e:0);
-  const d=e?Math.max(e-(c-p),0):0;
+  const e=num($("#iEsp").value),c=num($("#iCob").value);
+  const p=(e&&c>e)?c-e:0;
+  const d=e?Math.max(e-c,0):0;
   return {e,c,p,d};
 }
 function difer(){
@@ -895,7 +988,7 @@ function editCobro(k){
   ${g.extra?`<label class="l">Fecha</label><input id="eFec" type="date" value="${g.fecha}" max="${hoy()}">`:`<div class="sum">Reserva del ${bonita(g.fecha)}</div>`}
   <label class="l">Precio esperado</label><input id="iEsp" type="number" inputmode="decimal" placeholder="0" value="${g.esp>0?nn(g.esp):""}" oninput="difer()">
   <label class="l">Cobrado (total, propina incluida)</label><input id="iCob" type="number" inputmode="decimal" placeholder="0" value="${nn(g.con)}" oninput="difer()">
-  <label class="l">Propina (si la dejas vacía, se calcula)</label><input id="iPro" type="number" inputmode="decimal" placeholder="auto" value="${g.prop>0?nn(g.prop):""}" oninput="difer()">
+  0?nn(g.prop):""}" oninput="difer()">
   <div class="dif" id="iDif"></div>
   <button class="btn" style="margin-bottom:0" id="eOk" onclick="guardarEdit()">Guardar cambios</button>
   <button class="btn danger sm" style="margin-top:14px" onclick="quitarCobro()">${g.extra?"Eliminar este ingreso":"Quitar el cobro (la reserva se queda)"}</button>`);
@@ -905,7 +998,7 @@ function editCobro(k){
 async function guardarEdit(){
   const g=S.cobros.find(x=>x.k===S.ek);if(!g)return;
   const cob=num($("#iCob").value);if(!(cob>0))return toast("Escribe cuánto cobraste");
-  const esp=num($("#iEsp").value)||cob,raw=$("#iPro").value.trim();
+  const esp=num($("#iEsp").value)||cob;
   const pro=raw!==""?Math.max(num(raw),0):(cob>esp?cob-esp:0),desc=Math.max(esp-(cob-pro),0);
   let nombre=$("#eNom").value.trim();const tel=$("#eTel").value.trim()||null,con=$("#eCon");
   if(tel&&!/^[0-9]{8}$/.test(tel))return toast("El teléfono debe tener 8 dígitos");
@@ -1172,6 +1265,287 @@ async function desbloquearCliente(){
   if(error)return toast("No se pudo desbloquear");
   cerrar();toast("Cliente desbloqueado");cargarCB();
 }
+
+/* ---------- FAB ---------- */
+function toggleFab(){
+  const btn=$("#fabBtn"),menu=$("#fabMenu");
+  const open=btn.classList.toggle("open");
+  menu.classList.toggle("show",open);
+}
+function cerrarFab(){
+  $("#fabBtn").classList.remove("open");
+  $("#fabMenu").classList.remove("show");
+}
+document.addEventListener("click",e=>{
+  if(!e.target.closest("#fabWrap"))cerrarFab();
+});
+
+/* ---------- AGENDA sub-tabs ---------- */
+$("#agendaTabs")&&($("#agendaTabs").onclick=e=>{
+  const b=e.target.closest("button");if(!b)return;
+  $$("#agendaTabs button").forEach(x=>x.classList.toggle("on",x===b));
+  const a=b.dataset.a;
+  $("#agenda-clientes").hidden=a!=="clientes";
+  $("#agenda-calendario").hidden=a!=="calendario";
+  if(a==="calendario")pintaCal();
+});
+
+/* ---------- CALENDARIO ---------- */
+S.calDia=hoy();
+S.calPer="dia";
+
+$("#calPer")&&($("#calPer").onclick=e=>{
+  const b=e.target.closest("button");if(!b)return;
+  S.calPer=b.dataset.p;
+  $$("#calPer button").forEach(x=>x.classList.toggle("on",x===b));
+  pintaCal();
+});
+
+function calMover(n){
+  const d=new Date(S.calDia+"T12:00:00");
+  if(S.calPer==="dia")d.setDate(d.getDate()+n);
+  else if(S.calPer==="sem")d.setDate(d.getDate()+n*7);
+  else d.setMonth(d.getMonth()+n);
+  S.calDia=iso(d);
+  pintaCal();
+}
+
+function pintaCal(){
+  const body=$("#calBody");if(!body)return;
+  const lab=$("#calLab");
+  const d=new Date(S.calDia+"T12:00:00");
+  if(S.calPer==="dia"){
+    lab.textContent=fmtLargo(S.calDia);
+    body.innerHTML=calDiaHTML(S.calDia);
+  }else if(S.calPer==="sem"){
+    const l=lunes(S.calDia);
+    lab.textContent="Semana "+fmtCorto(l)+" – "+fmtCorto(addDays(l,6));
+    body.innerHTML=calSemHTML(l);
+  }else{
+    lab.textContent=MESES[d.getMonth()]+" "+d.getFullYear();
+    body.innerHTML=calMesHTML(S.calDia);
+  }
+}
+
+function fmtLargo(f){
+  const d=new Date(f+"T12:00:00");
+  return DIAS[d.getDay()]+" "+d.getDate()+" "+MESES[d.getMonth()];
+}
+function fmtCorto(f){
+  const d=new Date(f+"T12:00:00");
+  return d.getDate()+"/"+ (d.getMonth()+1);
+}
+const DIAS=["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+const MESES=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+
+function slotsDelDia(){
+  // mismos horarios que la web de reservas
+  const o=[];
+  [[540,690],[840,960]].forEach(r=>{for(let m=r[0];m<=r[1];m+=30)o.push(t12(m))});
+  return o;
+}
+function t12(m){
+  let h=Math.floor(m/60),mm=m%60,p=h>=12?"PM":"AM";
+  h=h%12||12;
+  return h+":"+String(mm).padStart(2,"0")+" "+p;
+}
+function mins(s){
+  const m=String(s||"").match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if(!m)return 0;
+  let h=+m[1]%12;if(m[3].toUpperCase()==="PM")h+=12;
+  return h*60+ +m[2];
+}
+
+function citasDeFecha(f){
+  // S.rows contiene los turnos cargados
+  return (S.rows||[]).filter(r=>String(r.fecha).slice(0,10)===f && !r.cancelado);
+}
+
+function calDiaHTML(f){
+  const citas=citasDeFecha(f);
+  const byTurno={};
+  citas.forEach(c=>{
+    const t=c.turno||"";
+    if(!byTurno[t])byTurno[t]=c;
+  });
+  const slots=slotsDelDia();
+  let h='<div class="cal-slots">';
+  slots.forEach(s=>{
+    const c=byTurno[s];
+    if(c){
+      const ns=c.no_show;
+      const cob=c.precio_cobrado!=null;
+      const cls=ns?"ns":"busy";
+      const est=ns?"No-show":(cob?"Cobrado":"Pendiente");
+      h+=`<div class="cal-slot ${cls}" onclick="abrirCitaCal('${c.reserva_id||c.id}')">
+        <div class="hora">${s}</div>
+        <div class="info"><b>${esc(c.nombre)}</b><small>${esc(c.servicios||"")}</small></div>
+        <span class="estado" style="border-color:inherit">${est}</span>
+      </div>`;
+    }else{
+      h+=`<div class="cal-slot free" onclick="abrirNuevaCita('${f}','${s}')">
+        <div class="hora">${s}</div>
+        <div class="info"><b style="opacity:.6">Libre</b></div>
+      </div>`;
+    }
+  });
+  return h+"</div>";
+}
+
+function calSemHTML(lunesStr){
+  let h='<div class="cal-day-head">';
+  for(let i=0;i<7;i++){
+    const f=addDays(lunesStr,i);
+    const d=new Date(f+"T12:00:00");
+    h+=`<span>${DIAS[d.getDay()]} ${d.getDate()}</span>`;
+  }
+  h+='</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">';
+  for(let i=0;i<7;i++){
+    const f=addDays(lunesStr,i);
+    const n=citasDeFecha(f).length;
+    h+=`<div class="cal-cell ${f===hoy()?"today":""} ${n?"has":""}" onclick="S.calPer='dia';S.calDia='${f}';$$('#calPer button').forEach(x=>x.classList.toggle('on',x.dataset.p==='dia'));pintaCal()">
+      <b>${new Date(f+"T12:00:00").getDate()}</b>
+      ${n?`<span class="dot"></span><small style="font-size:.65em;color:var(--oro)">${n}</small>`:""}
+    </div>`;
+  }
+  return h+"</div>";
+}
+
+function calMesHTML(ref){
+  const d=new Date(ref+"T12:00:00");
+  const y=d.getFullYear(),m=d.getMonth();
+  const first=new Date(y,m,1);
+  const start=new Date(first);
+  start.setDate(1-((first.getDay()+6)%7)); // lunes
+  let h='<div class="cal-day-head">';
+  ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"].forEach(x=>h+=`<span>${x}</span>`);
+  h+='</div><div class="cal-days">';
+  for(let i=0;i<42;i++){
+    const cur=new Date(start);
+    cur.setDate(start.getDate()+i);
+    const f=iso(cur);
+    const other=cur.getMonth()!==m;
+    const n=citasDeFecha(f).length;
+    h+=`<div class="cal-cell ${other?"other":""} ${f===hoy()?"today":""} ${n?"has":""}" onclick="S.calPer='dia';S.calDia='${f}';$$('#calPer button').forEach(x=>x.classList.toggle('on',x.dataset.p==='dia'));pintaCal()">
+      <b>${cur.getDate()}</b>${n?'<span class="dot"></span>':""}
+    </div>`;
+  }
+  return h+"</div>";
+}
+
+function abrirCitaCal(id){
+  const c=(S.rows||[]).find(r=>(r.reserva_id||r.id)==id || r.id==id);
+  if(!c)return toast("No se encontró la cita");
+  const cob=c.precio_cobrado!=null;
+  const ns=!!c.no_show;
+  abrir(`<div class="sh"><h3>${esc(c.nombre)}</h3><button class="ico" onclick="cerrar()">✕</button></div>
+    <div class="stats" style="grid-template-columns:1fr 1fr">
+      <div><small>Fecha</small><b style="font-size:1em">${fmtLargo(String(c.fecha).slice(0,10))}</b></div>
+      <div><small>Hora</small><b style="font-size:1em">${esc(c.turno||"—")}</b></div>
+    </div>
+    <p style="margin:8px 0;color:var(--suave)">${esc(c.servicios||"")}</p>
+    <p style="margin:0 0 14px"><b>${fmt(c.precio_esperado||c.total||0)}</b> esperado
+      ${cob?` · <b style="color:var(--oro)">${fmt(c.precio_cobrado)}</b> cobrado`:""}
+      ${ns?' · <span style="color:var(--bad)">No-show</span>':""}
+    </p>
+    <div class="grid2">
+      ${!cob&&!ns?`<button class="btn sm" onclick="cerrar();cobrarCita('${c.reserva_id||c.id}')">Cobrar</button>
+      <button class="btn sm ghost" onclick="marcarNS('${c.reserva_id||c.id}')">No-show</button>`:""}
+      ${cob||ns?`<button class="btn sm ghost" style="grid-column:1/-1" onclick="cerrar()">Cerrar</button>`:""}
+    </div>
+    <button class="btn danger" style="margin-top:10px" onclick="eliminarCita('${c.reserva_id||c.id}')">Eliminar cita</button>`);
+}
+
+async function cobrarCita(id){
+  const c=(S.rows||[]).find(r=>(r.reserva_id||r.id)==id || r.id==id);
+  if(!c)return;
+  const esp=c.precio_esperado||c.total||0;
+  abrir(`<div class="sh"><h3>Cobrar</h3><button class="ico" onclick="cerrar()">✕</button></div>
+    <p style="color:var(--suave);margin:0 0 10px">${esc(c.nombre)} · ${esc(c.turno||"")}</p>
+    <label class="l">Precio esperado</label>
+    <input id="cobEsp" type="number" value="${esp}" oninput="diffCob()">
+    <label class="l">Precio cobrado</label>
+    <input id="cobVal" type="number" value="${esp}" oninput="diffCob()">
+    <div class="dif" id="cobDif"></div>
+    <button class="btn" id="cobOk" onclick="guardarCobro('${c.reserva_id||c.id}')">Confirmar cobro</button>`);
+}
+function diffCob(){
+  const e=num($("#cobEsp").value),c=num($("#cobVal").value);
+  const p=c>e?c-e:0,d=e>c?e-c:0;
+  $("#cobDif").textContent=[p?"Propina: "+fmt(p):"",d?"Descuento: "+fmt(d):""].filter(Boolean).join(" · ")||"Exacto";
+}
+async function guardarCobro(id){
+  const cob=num($("#cobVal").value),esp=num($("#cobEsp").value)||cob;
+  if(!(cob>0))return toast("Escribe el monto");
+  const pro=cob>esp?cob-esp:0;
+  const desc=esp>cob?esp-cob:0;
+  const b=$("#cobOk");b.disabled=true;b.textContent="Guardando...";
+  const q=sb.from("turnos").update({precio_cobrado:cob,precio_esperado:esp,propina:pro,descuento:desc,no_show:false});
+  const c=(S.rows||[]).find(r=>(r.reserva_id||r.id)==id || r.id==id);
+  let err;
+  if(c&&c.reserva_id)err=(await q.eq("reserva_id",c.reserva_id)).error;
+  else err=(await q.eq("id",id)).error;
+  b.disabled=false;b.textContent="Confirmar cobro";
+  if(err)return toast("Error: "+err.message);
+  toast("Cobrado");cerrar();recargar();
+}
+async function marcarNS(id){
+  if(!confirm("¿Marcar como no-show?"))return;
+  const c=(S.rows||[]).find(r=>(r.reserva_id||r.id)==id || r.id==id);
+  const q=sb.from("turnos").update({no_show:true});
+  let err;
+  if(c&&c.reserva_id)err=(await q.eq("reserva_id",c.reserva_id)).error;
+  else err=(await q.eq("id",id)).error;
+  if(err)return toast("Error: "+err.message);
+  toast("Marcado no-show");cerrar();recargar();
+}
+async function eliminarCita(id){
+  if(!confirm("¿Eliminar esta cita? No se puede deshacer."))return;
+  const c=(S.rows||[]).find(r=>(r.reserva_id||r.id)==id || r.id==id);
+  let err;
+  if(c&&c.reserva_id)err=(await sb.from("turnos").delete().eq("reserva_id",c.reserva_id)).error;
+  else err=(await sb.from("turnos").delete().eq("id",id)).error;
+  if(err)return toast("Error: "+err.message);
+  toast("Cita eliminada");cerrar();recargar();
+}
+
+function abrirNuevaCita(fecha,turno){
+  fecha=fecha||S.calDia||hoy();
+  turno=turno||"";
+  const dl=[...S.cli.values()].map(c=>`<option value="${esc(c.nombre)}">`).join("");
+  abrir(`<div class="sh"><h3>Nueva cita</h3><button class="ico" onclick="cerrar()">✕</button></div>
+    <input id="nNom" list="dlc2" placeholder="Nombre del cliente" autocomplete="off">
+    <datalist id="dlc2">${dl}</datalist>
+    <input id="nTel" type="tel" maxlength="8" placeholder="Teléfono (8 dígitos)">
+    <label class="l">Fecha</label>
+    <input id="nFec" type="date" value="${fecha}">
+    <label class="l">Hora</label>
+    <select id="nTur">${slotsDelDia().map(s=>`<option value="${s}" ${s===turno?"selected":""}>${s}</option>`).join("")}</select>
+    <label class="l">Servicios (texto)</label>
+    <input id="nSrv" placeholder="Corte, barba...">
+    <label class="l">Precio</label>
+    <input id="nPre" type="number" placeholder="0">
+    <button class="btn" id="nOk" onclick="guardarNuevaCita()">Agendar</button>`);
+}
+async function guardarNuevaCita(){
+  const nombre=$("#nNom").value.trim(),tel=$("#nTel").value.trim()||null;
+  const fecha=$("#nFec").value,turno=$("#nTur").value,serv=$("#nSrv").value.trim()||"Cita";
+  const pre=num($("#nPre").value)||0;
+  if(!nombre)return toast("Escribe el nombre");
+  if(!fecha||!turno)return toast("Elige fecha y hora");
+  const b=$("#nOk");b.disabled=true;b.textContent="Guardando...";
+  const row={fecha,turno,estado:"ocupado",nombre,telefono:tel,reserva_id:crypto.randomUUID(),
+    notificado:true,servicios:serv,total:pre,precio_esperado:pre,precio_cobrado:null,propina:0,descuento:0,no_show:false,cancelado:false};
+  const {error}=await sb.from("turnos").insert([row]);
+  b.disabled=false;b.textContent="Agendar";
+  if(error)return toast("Error: "+error.message);
+  toast("Cita agendada");cerrar();recargar();
+}
+
+// Make sure S.rows is populated when data loads
+// Hook into existing construir or recargar if needed
+const _oldConstruir = typeof construir==="function" ? construir : null;
+
 </script>
 </body>
 </html>
