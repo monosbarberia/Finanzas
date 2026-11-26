@@ -685,8 +685,9 @@ function ficha(k){
   const deudasHtml=deudas.length?`<div class="sec-title" style="color:var(--bad)">Deudas por no-show</div>
   ${deudas.map(g=>`<div class="row" style="cursor:default">
     <div><b>${bonita(g.fecha)}</b><small>${esc(g.serv||"")}<span class="tag debt">No vino</span></small></div>
-    <div class="amt" style="color:var(--bad)">${fmt(g.esp||0)}
-      <button class="btn sm" style="margin:6px 0 0;padding:8px 12px;font-size:.85em" onclick="cobrarDeuda('${esc(g.k)}')">Cobrar</button>
+    <div class="amt" style="color:var(--bad);display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+      <span>${fmt(g.esp||0)}</span>
+      <button type="button" class="chip" style="padding:5px 12px;font-size:.8em;margin:0" onclick="cobrarDeuda('${esc(g.k)}')">Cobrar</button>
     </div>
   </div>`).join("")}
   <button class="btn" style="margin:8px 0 16px" onclick="cobrarTodasDeudas()">Cobrar todas (${fmt(c.deuda)})</button>`:"";
@@ -992,59 +993,108 @@ function toggleEd(c){
 }
 
 async function cobrarDeuda(k){
-  const g=(S.cobros||[]).find(x=>x.k===k) || (S.rows||[]).map(r=>({k:r.reserva_id||("id"+r.id),id:r.id,rid:r.reserva_id,esp:+(r.precio_esperado||r.total||0),fecha:r.fecha,serv:r.servicios,ns:r.no_show,nsc:r.no_show_cobrado})).find(x=>x.k===k);
-  // better: look in client items
   const c=S.cli.get(S.ekey);
   const item=c?(c.items||[]).find(x=>x.k===k):null;
-  const target=item||g;
-  if(!target)return toast("No se encontró la deuda");
-  const esp=target.esp||0;
+  if(!item)return toast("No se encontró la deuda");
+  const esp=item.esp||0;
   abrir(`<div class="sh"><h3>Cobrar no-show</h3><button class="ico" onclick="cerrar()">✕</button></div>
-    <p style="color:var(--suave);margin:0 0 10px">${bonita(target.fecha)} · ${esc(target.serv||"")}</p>
+    <p style="color:var(--suave);margin:0 0 10px">${bonita(item.fecha)} · ${esc(item.serv||"")}</p>
+    <label class="l">Fecha del cobro</label>
+    <input id="dFec" type="date" value="${hoy()}" max="${hoy()}">
     <label class="l">Monto a cobrar</label>
     <input id="dCob" type="number" inputmode="decimal" value="${esp||""}" placeholder="0">
-    <div class="dif" id="dDif" style="margin-bottom:8px">Se quitará el no-show al cobrar</div>
-    <button class="btn" id="dOk" onclick="guardarDeuda('${esc(target.k)}')">Confirmar cobro</button>`);
+    <div class="dif" style="margin-bottom:8px">Se registra el cobro en el día elegido y se quita el no-show</div>
+    <button class="btn" id="dOk" onclick="guardarDeuda('${esc(item.k)}')">Confirmar cobro</button>`);
 }
 async function guardarDeuda(k){
   const cob=num($("#dCob").value);
+  const fec=$("#dFec").value;
   if(!(cob>0))return toast("Escribe el monto");
+  if(!fec)return toast("Elige la fecha del cobro");
   const c=S.cli.get(S.ekey);
   const item=c?(c.items||[]).find(x=>x.k===k):null;
   if(!item)return toast("No se encontró el registro");
   const b=$("#dOk");b.disabled=true;b.textContent="Guardando...";
-  const patch={precio_cobrado:cob,precio_esperado:item.esp||cob,propina:0,descuento:0,no_show_cobrado:true,no_show:false};
+
+  // 1) Marcar el no-show original como pagado y quitar bandera no-show
+  const patch={no_show_cobrado:true,no_show:false};
   let err=null;
-  if(item.rid){
-    const r=await sb.from("turnos").update(patch).eq("reserva_id",item.rid);
-    err=r.error;
-  }else if(item.id){
-    const r=await sb.from("turnos").update(patch).eq("id",item.id);
-    err=r.error;
-  }else{
-    err={message:"Sin id de registro"};
-  }
+  if(item.rid)err=(await sb.from("turnos").update(patch).eq("reserva_id",item.rid)).error;
+  else if(item.id)err=(await sb.from("turnos").update(patch).eq("id",item.id)).error;
+  else err={message:"Sin id de registro"};
+  if(err){b.disabled=false;b.textContent="Confirmar cobro";return toast("Error: "+err.message)}
+
+  // 2) Crear cobro en el día seleccionado (cuenta en el total de ese día)
+  const row={
+    fecha:fec,
+    turno:"Extra "+(typeof hms==="function"?hms():"cobro"),
+    estado:"ocupado",
+    nombre:c.nombre||item.nombre||"Cliente",
+    telefono:c.tel||item.tel||null,
+    reserva_id:crypto.randomUUID(),
+    notificado:true,
+    servicios:"Cobro no-show ("+bonita(item.fecha)+")",
+    total:Math.round(cob),
+    precio_esperado:item.esp||cob,
+    precio_cobrado:cob,
+    propina:0,
+    descuento:0,
+    no_show:false,
+    no_show_cobrado:true,
+    cancelado:false
+  };
+  const ins=await sb.from("turnos").insert([row]);
   b.disabled=false;b.textContent="Confirmar cobro";
-  if(err)return toast("Error: "+err.message);
-  toast("Deuda cobrada · no-show quitado");
+  if(ins.error)return toast("No-show quitado, pero falló el cobro del día: "+ins.error.message);
+  toast("Cobrado el "+bonita(fec)+" · no-show quitado");
   cerrar();recargar();
 }
 async function cobrarTodasDeudas(){
   const c=S.cli.get(S.ekey);if(!c)return;
   const deudas=(c.items||[]).filter(g=>g.ns&&!g.nsc);
   if(!deudas.length)return toast("No hay deudas");
-  if(!confirm("¿Cobrar las "+deudas.length+" deudas ("+fmt(c.deuda)+") y quitar los no-show?"))return;
+  abrir(`<div class="sh"><h3>Cobrar todas las deudas</h3><button class="ico" onclick="cerrar()">✕</button></div>
+    <p style="color:var(--suave);margin:0 0 10px">${deudas.length} no-show · total ${fmt(c.deuda)}</p>
+    <label class="l">Fecha del cobro</label>
+    <input id="dFecAll" type="date" value="${hoy()}" max="${hoy()}">
+    <div class="dif" style="margin-bottom:8px">Todos los cobros se registran en ese día y se quitan los no-show</div>
+    <button class="btn" id="dOkAll" onclick="guardarTodasDeudas()">Confirmar todo</button>`);
+}
+async function guardarTodasDeudas(){
+  const c=S.cli.get(S.ekey);if(!c)return;
+  const deudas=(c.items||[]).filter(g=>g.ns&&!g.nsc);
+  const fec=$("#dFecAll").value;
+  if(!fec)return toast("Elige la fecha del cobro");
+  if(!deudas.length)return toast("No hay deudas");
+  const b=$("#dOkAll");b.disabled=true;b.textContent="Guardando...";
   let ok=0,fail=0;
   for(const item of deudas){
     const cob=item.esp||0;
     if(!(cob>0)){fail++;continue}
-    const patch={precio_cobrado:cob,precio_esperado:cob,propina:0,descuento:0,no_show_cobrado:true,no_show:false};
+    const patch={no_show_cobrado:true,no_show:false};
     let err=null;
     if(item.rid)err=(await sb.from("turnos").update(patch).eq("reserva_id",item.rid)).error;
     else if(item.id)err=(await sb.from("turnos").update(patch).eq("id",item.id)).error;
     else err=true;
-    if(err)fail++;else ok++;
+    if(err){fail++;continue}
+    const row={
+      fecha:fec,
+      turno:"Extra "+(typeof hms==="function"?hms():"cobro"),
+      estado:"ocupado",
+      nombre:c.nombre||"Cliente",
+      telefono:c.tel||null,
+      reserva_id:crypto.randomUUID(),
+      notificado:true,
+      servicios:"Cobro no-show ("+bonita(item.fecha)+")",
+      total:Math.round(cob),
+      precio_esperado:item.esp||cob,
+      precio_cobrado:cob,
+      propina:0,descuento:0,no_show:false,no_show_cobrado:true,cancelado:false
+    };
+    const ins=await sb.from("turnos").insert([row]);
+    if(ins.error)fail++;else ok++;
   }
+  b.disabled=false;b.textContent="Confirmar todo";
   toast(ok?"Cobradas: "+ok+(fail?" · fallidas: "+fail:""):"No se pudo cobrar");
   cerrar();recargar();
 }
