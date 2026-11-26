@@ -325,9 +325,10 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 4p
 .cal-slots{display:flex;flex-direction:column;gap:6px;margin-top:10px}
 .cal-slot{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.2);cursor:pointer;transition:all .15s}
 .cal-slot:hover{border-color:var(--oro);background:rgba(203,178,106,.08)}
-.cal-slot.free{border-style:dashed;opacity:.7}
-.cal-slot.busy{border-color:rgba(203,178,106,.45);background:rgba(203,178,106,.1)}
-.cal-slot.ns{border-color:rgba(233,167,157,.45);background:rgba(233,167,157,.08)}
+.cal-slot.free{border-style:dashed;opacity:.65;background:transparent}
+.cal-slot.pend{border-color:rgba(214,190,112,.35);background:rgba(0,0,0,.12)} /* pendiente: vacío dorado sutil */
+.cal-slot.cobrado{border-color:rgba(46,180,110,.55);background:rgba(46,180,110,.22);color:#e8fff0} /* cobrado: verde relleno */
+.cal-slot.ns{border-color:var(--bad);background:rgba(0,0,0,.12)} /* no-show: vacío + borde rojo */
 .cal-slot .hora{width:72px;font-weight:700;color:var(--oro);flex-shrink:0}
 .cal-slot .info{flex:1;min-width:0}
 .cal-slot .info b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -388,17 +389,10 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 4p
 
   <section class="view" id="v-cli">
     <div class="subtabs" id="agendaTabs">
-      <button class="on" data-a="clientes">Clientes</button>
-      <button data-a="calendario">Calendario</button>
+      <button class="on" data-a="calendario">Calendario</button>
+      <button data-a="clientes">Clientes</button>
     </div>
-    <div id="agenda-clientes">
-      <div class="box">
-        <input id="cBus" type="text" placeholder="Buscar cliente" oninput="pintaCli()">
-        <div class="seg" id="cliSeg"><button data-f="todos" class="on">Todos</button><button data-f="deben">Deben turno</button></div>
-        <div id="cliLista"></div>
-      </div>
-    </div>
-    <div id="agenda-calendario" hidden>
+    <div id="agenda-calendario">
       <div class="box">
         <div class="seg" id="calPer">
           <button data-p="dia" class="on">Día</button>
@@ -412,6 +406,13 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 4p
         </div>
         <div id="calBody"></div>
         <button class="btn" style="margin-top:14px" onclick="later(abrirNuevaCita)">+ Nueva cita</button>
+      </div>
+    </div>
+    <div id="agenda-clientes" hidden>
+      <div class="box">
+        <input id="cBus" type="text" placeholder="Buscar cliente" oninput="pintaCli()">
+        <div class="seg" id="cliSeg"><button data-f="todos" class="on">Todos</button><button data-f="deben">Deben turno</button></div>
+        <div id="cliLista"></div>
       </div>
     </div>
   </section>
@@ -550,8 +551,8 @@ async function traerTodo(){
   let all=[],from=0;
   for(;;){
     const {data,error}=await sb.from("turnos")
-      .select("id,fecha,turno,nombre,telefono,reserva_id,servicios,total,precio_esperado,precio_cobrado,propina,descuento,no_show,no_show_cobrado,moneda")
-      .gte("fecha",DESDE).or("precio_cobrado.not.is.null,no_show.eq.true").order("id").range(from,from+999);
+      .select("id,fecha,turno,nombre,telefono,reserva_id,servicios,total,precio_esperado,precio_cobrado,propina,descuento,no_show,no_show_cobrado,moneda,cancelado")
+      .gte("fecha",DESDE).order("fecha").order("id").range(from,from+999);
     if(error)throw error;
     all=all.concat(data);if(data.length<1000)break;from+=1000;
   }
@@ -1288,6 +1289,7 @@ $("#agendaTabs")&&($("#agendaTabs").onclick=e=>{
   $("#agenda-clientes").hidden=a!=="clientes";
   $("#agenda-calendario").hidden=a!=="calendario";
   if(a==="calendario")pintaCal();
+  if(a==="clientes")pintaCli();
 });
 
 /* ---------- CALENDARIO ---------- */
@@ -1357,8 +1359,7 @@ function mins(s){
 }
 
 function citasDeFecha(f){
-  // S.rows contiene los turnos cargados
-  return (S.rows||[]).filter(r=>String(r.fecha).slice(0,10)===f && !r.cancelado);
+  return (S.rows||[]).filter(r=>String(r.fecha).slice(0,10)===f && !r.cancelado && !(r.turno||"").startsWith("Extra"));
 }
 
 function calDiaHTML(f){
@@ -1373,10 +1374,11 @@ function calDiaHTML(f){
   slots.forEach(s=>{
     const c=byTurno[s];
     if(c){
-      const ns=c.no_show;
+      const ns=!!c.no_show;
       const cob=c.precio_cobrado!=null;
-      const cls=ns?"ns":"busy";
-      const est=ns?"No-show":(cob?"Cobrado":"Pendiente");
+      let cls="pend", est="Pendiente";
+      if(ns){cls="ns"; est="No-show";}
+      else if(cob){cls="cobrado"; est="Cobrado";}
       h+=`<div class="cal-slot ${cls}" onclick="abrirCitaCal('${c.reserva_id||c.id}')">
         <div class="hora">${s}</div>
         <div class="info"><b>${esc(c.nombre)}</b><small>${esc(c.servicios||"")}</small></div>
@@ -1393,22 +1395,34 @@ function calDiaHTML(f){
 }
 
 function calSemHTML(lunesStr){
-  let h='<div class="cal-day-head">';
-  for(let i=0;i<7;i++){
+  let h="";
+  // Lun a Sáb (0..5)
+  for(let i=0;i<6;i++){
     const f=addDays(lunesStr,i);
     const d=new Date(f+"T12:00:00");
-    h+=`<span>${DIAS[d.getDay()]} ${d.getDate()}</span>`;
+    const citas=citasDeFecha(f).sort((a,b)=>mins(a.turno)-mins(b.turno));
+    const isToday=f===hoy();
+    h+=`<div class="box" style="padding:14px;margin-bottom:10px;${isToday?"border-color:var(--oro);box-shadow:0 0 0 1px var(--oro)":""}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <b style="color:var(--oro);letter-spacing:1px">${DIAS[d.getDay()]} ${d.getDate()} ${MESES[d.getMonth()]}</b>
+        <small style="color:var(--suave)">${citas.length?citas.length+" cita"+(citas.length>1?"s":""):"Libre"}</small>
+      </div>`;
+    if(!citas.length){
+      h+=`<div style="opacity:.5;font-style:italic;padding:6px 0">Sin reservas</div>`;
+    }else{
+      citas.forEach(c=>{
+        const ns=!!c.no_show, cob=c.precio_cobrado!=null;
+        let badge=ns?"No-show":(cob?"Cobrado":"Pendiente");
+        let col=ns?"var(--bad)":(cob?"#2ecc71":"var(--oro)");
+        h+=`<div onclick="abrirCitaCal('${c.reserva_id||c.id}')" style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid rgba(214,190,112,.12);cursor:pointer">
+          <div><b style="font-size:.95em">${esc(c.turno||"")}</b> · ${esc(c.nombre)}<br><small style="color:var(--suave)">${esc(c.servicios||"")}</small></div>
+          <span style="font-size:.72em;letter-spacing:.5px;text-transform:uppercase;color:${col};border:1px solid ${col};border-radius:20px;padding:2px 8px">${badge}</span>
+        </div>`;
+      });
+    }
+    h+=`</div>`;
   }
-  h+='</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">';
-  for(let i=0;i<7;i++){
-    const f=addDays(lunesStr,i);
-    const n=citasDeFecha(f).length;
-    h+=`<div class="cal-cell ${f===hoy()?"today":""} ${n?"has":""}" onclick="S.calPer='dia';S.calDia='${f}';$$('#calPer button').forEach(x=>x.classList.toggle('on',x.dataset.p==='dia'));pintaCal()">
-      <b>${new Date(f+"T12:00:00").getDate()}</b>
-      ${n?`<span class="dot"></span><small style="font-size:.65em;color:var(--oro)">${n}</small>`:""}
-    </div>`;
-  }
-  return h+"</div>";
+  return h;
 }
 
 function calMesHTML(ref){
