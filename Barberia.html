@@ -301,6 +301,9 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 4p
   transform-origin:right center;
   animation:fabPop .4s cubic-bezier(.2,1.2,.4,1) both;
 }
+.fab-menu.show .fab-item:nth-child(1){animation-delay:.05s}
+.fab-menu.show .fab-item:nth-child(2){animation-delay:.10s}
+.fab-menu.show .fab-item:nth-child(3){animation-delay:.15s}
 .fab-item:active{transform:scale(.96)}
 @keyframes fabPop{from{opacity:0;transform:translateY(16px) scale(.85)}to{opacity:1;transform:none}}
 
@@ -467,6 +470,8 @@ label.l{display:block;font-style:italic;opacity:.8;font-size:.95em;margin:0 0 4p
 
 <div class="fab-wrap" id="fabWrap">
   <div class="fab-menu" id="fabMenu">
+    <button class="fab-item" onclick="cerrarFab();later(()=>editInv())">Stock</button>
+    <button class="fab-item" onclick="cerrarFab();later(abrirNuevaCita)">Cita</button>
     <button class="fab-item" onclick="cerrarFab();later(abrirIngreso)">Depositar</button>
   </div>
   <button class="fab" id="fabBtn" onclick="toggleFab()" aria-label="Acciones">
