@@ -1531,28 +1531,123 @@ async function eliminarCita(id){
 function abrirNuevaCita(fecha,turno){
   fecha=fecha||S.calDia||hoy();
   turno=turno||"";
+  NC={sel:new Set(),fijo:false,frec:"s"};
   const dl=[...S.cli.values()].map(c=>`<option value="${esc(c.nombre)}">`).join("");
   abrir(`<div class="sh"><h3>Nueva cita</h3><button class="ico" onclick="cerrar()">✕</button></div>
-    <input id="nNom" list="dlc2" placeholder="Nombre del cliente" autocomplete="off">
+    <input id="nNom" list="dlc2" placeholder="Nombre del cliente" autocomplete="off" oninput="nAutoTel()">
     <datalist id="dlc2">${dl}</datalist>
-    <input id="nTel" type="tel" maxlength="8" placeholder="Teléfono (8 dígitos)">
+    <input id="nTel" type="tel" inputmode="numeric" maxlength="8" placeholder="Teléfono (8 dígitos)">
+    <label class="l">Servicios</label>
+    <div class="chips" id="nSrv"></div>
+    <div class="dif" id="nTot" style="margin-bottom:8px"></div>
     <label class="l">Fecha</label>
-    <input id="nFec" type="date" value="${fecha}">
-    <label class="l">Hora</label>
-    <select id="nTur">${slotsDelDia().map(s=>`<option value="${s}" ${s===turno?"selected":""}>${s}</option>`).join("")}</select>
-    <label class="l">Servicios (texto)</label>
-    <input id="nSrv" placeholder="Corte, barba...">
-    <label class="l">Precio</label>
-    <input id="nPre" type="number" placeholder="0">
-    <button class="btn" id="nOk" onclick="guardarNuevaCita()">Agendar</button>`);
+    <input id="nFec" type="date" value="${fecha}" min="${hoy()}" onchange="nCargaHoras()">
+    <label class="l">Hora disponible</label>
+    <div class="chips" id="nHoras"><span style="opacity:.6;font-style:italic">Cargando...</span></div>
+    <label class="l" style="margin-top:10px">¿Cita fija?</label>
+    <div class="seg" id="nFijoSeg">
+      <button type="button" class="on" data-f="no">Solo una vez</button>
+      <button type="button" data-f="si">Fija (se repite)</button>
+    </div>
+    <div id="nFijoBox" hidden>
+      <label class="l">Se repite</label>
+      <div class="chips" id="nFrec"></div>
+      <label class="l">Hasta</label>
+      <input id="nFin" type="date" min="${hoy()}">
+      <div class="chips" id="nRap">
+        <button type="button" class="chip" data-r="m0">Fin de mes</button>
+        <button type="button" class="chip" data-r="m1">1 mes</button>
+        <button type="button" class="chip" data-r="m3">3 meses</button>
+      </div>
+    </div>
+    <button class="btn" style="margin-top:12px" id="nOk" onclick="guardarNuevaCita()">Agendar</button>`);
+
+  // servicios
+  const pintaNSrv=()=>{
+    const el=$("#nSrv");if(!el)return;
+    el.innerHTML=(S.precios||[]).map(p=>`<button type="button" class="chip" data-s="${esc(p.servicio)}" data-p="${p.precio}">${esc(p.servicio)} ${fmt(p.precio)}</button>`).join("")||'<span style="opacity:.6">Sin servicios cargados</span>';
+  };
+  pintaNSrv();
+  if(!(S.precios&&S.precios.length)&&typeof precios==="function")precios().then(pintaNSrv).catch(()=>{});
+
+  $("#nSrv").onclick=e=>{
+    const b=e.target.closest(".chip");if(!b)return;
+    const s=b.dataset.s;
+    NC.sel.has(s)?NC.sel.delete(s):NC.sel.add(s);
+    b.classList.toggle("on");
+    const t=[...$$("#nSrv .chip.on")].reduce((x,c)=>x+num(c.dataset.p),0);
+    $("#nTot").textContent=t?"Total: "+fmt(t):"";
+  };
+
+  // fijo toggle
+  $("#nFijoSeg").onclick=e=>{
+    const b=e.target.closest("button");if(!b)return;
+    $$("#nFijoSeg button").forEach(x=>x.classList.toggle("on",x===b));
+    NC.fijo=b.dataset.f==="si";
+    $("#nFijoBox").hidden=!NC.fijo;
+  };
+  $("#nFrec").innerHTML=Object.entries(FR||{s:"Cada semana",q:"Cada 2 semanas",c:"Cada 4 semanas",m:"Una vez al mes"}).map(([k,v])=>`<button type="button" class="chip${k==="s"?" on":""}" data-f="${k}">${v}</button>`).join("");
+  $("#nFrec").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;NC.frec=b.dataset.f;$$("#nFrec .chip").forEach(x=>x.classList.toggle("on",x===b))};
+  $("#nRap").onclick=e=>{
+    const b=e.target.closest(".chip");if(!b)return;
+    const i=$("#nFec").value||hoy(),r=b.dataset.r;
+    $("#nFin").value=r==="m0"?(typeof finMes==="function"?finMes(i):i): (typeof addMonths==="function"?addMonths(i,r==="m1"?1:3):i);
+  };
+
+  // preselect turno if provided after hours load
+  NC.preTur=turno;
+  nCargaHoras();
+}
+function nAutoTel(){
+  const n=$("#nNom").value.trim().toLowerCase();
+  const c=[...S.cli.values()].find(c=>(c.nombre||"").toLowerCase()===n);
+  if(c&&c.tel&&!$("#nTel").value)$("#nTel").value=c.tel;
+}
+function nCargaHoras(){
+  const el=$("#nHoras");if(!el)return;
+  const f=$("#nFec").value;
+  if(!f){el.innerHTML='<span style="opacity:.6">Elige fecha</span>';return}
+  const ocup=new Set(citasDeFecha(f).map(c=>c.turno));
+  const libres=slotsDelDia().filter(s=>!ocup.has(s));
+  if(!libres.length){el.innerHTML='<span style="opacity:.6;color:var(--bad)">No hay horarios libres este día</span>';return}
+  el.innerHTML=libres.map(s=>`<button type="button" class="chip${s===(NC.preTur||"")?" on":""}" data-s="${s}">${s}</button>`).join("");
+  el.onclick=e=>{const b=e.target.closest(".chip");if(!b)return;$$("#nHoras .chip").forEach(x=>x.classList.remove("on"));b.classList.add("on")};
 }
 async function guardarNuevaCita(){
   const nombre=$("#nNom").value.trim(),tel=$("#nTel").value.trim()||null;
-  const fecha=$("#nFec").value,turno=$("#nTur").value,serv=$("#nSrv").value.trim()||"Cita";
-  const pre=num($("#nPre").value)||0;
+  const fecha=$("#nFec").value;
+  const horaEl=$$("#nHoras .chip.on")[0];
+  const turno=horaEl?horaEl.dataset.s:"";
+  const serv=[...NC.sel].join(", ")||"Cita";
+  const pre=[...$$("#nSrv .chip.on")].reduce((x,c)=>x+num(c.dataset.p),0);
   if(!nombre)return toast("Escribe el nombre");
-  if(!fecha||!turno)return toast("Elige fecha y hora");
-  const b=$("#nOk");b.disabled=true;b.textContent="Guardando...";
+  if(!fecha||!turno)return toast("Elige fecha y hora disponible");
+  if(!NC.sel.size)return toast("Elige al menos un servicio");
+
+  const b=$("#nOk");b.disabled=true;b.textContent="Agendando...";
+
+  // Cita fija (se repite)
+  if(NC.fijo){
+    const fin=$("#nFin").value;
+    if(!fin||fin<fecha){b.disabled=false;b.textContent="Agendar";return toast("Elige hasta qué fecha se repite")}
+    const fr=NC.frec||"s";
+    const fechas=typeof fechasFijas==="function"?fechasFijas(fecha,fin,fr):[fecha];
+    if(!fechas.length){b.disabled=false;b.textContent="Agendar";return toast("No hay fechas en ese rango")}
+    try{
+      const {data,error}=await sb.rpc("agendar_fijo",{
+        p_nombre:nombre,p_telefono:tel,p_fechas:fechas,p_horas:[turno],
+        p_servicios:serv,p_total:pre,p_pendiente:true
+      });
+      b.disabled=false;b.textContent="Agendar";
+      if(error)return toast((error.message||"").includes("LIMITE_SEMANAL")?"Ese teléfono ya tiene 3 citas en una semana":"No se pudo agendar: "+(error.message||""));
+      const om=(data&&data.omitidas)||[];
+      toast(om.length?`Agendado (${om.length} omitidas por ocupación)`:"Citas fijas agendadas");
+      cerrar();recargar();
+    }catch(e){b.disabled=false;b.textContent="Agendar";toast("Error: "+(e.message||e))}
+    return;
+  }
+
+  // Cita normal (una sola)
   const row={fecha,turno,estado:"ocupado",nombre,telefono:tel,reserva_id:crypto.randomUUID(),
     notificado:true,servicios:serv,total:pre,precio_esperado:pre,precio_cobrado:null,propina:0,descuento:0,no_show:false,cancelado:false};
   const {error}=await sb.from("turnos").insert([row]);
